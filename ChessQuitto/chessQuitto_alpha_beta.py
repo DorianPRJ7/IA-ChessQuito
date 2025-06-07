@@ -11,7 +11,7 @@ def traduire_position(colonne, ligne):
     # Colonne B Ligne 3 -> Indice 1 2,
     indice_col = Colonnes.index(colonne)
     indice_lig = Lignes.index(ligne)
-    return indice_col, indice_lig
+    return indice_lig, indice_col
 
 
 def afficher(jeu):
