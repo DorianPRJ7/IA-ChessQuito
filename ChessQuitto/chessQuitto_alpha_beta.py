@@ -1,5 +1,6 @@
 import math
 
+############## UTILITAIRES ##############
 def nouveau_jeu():
     return [
         ['.', '.', '.', '.'],
@@ -9,7 +10,34 @@ def nouveau_jeu():
     ]
 
 
-def traduire_position(pos):
+def creer_pieces(mode_jeu):
+    pieces_blanches = []
+    pieces_noires = []
+    if mode_jeu == 1 :
+        pieces_blanches += ['BR']
+        pieces_noires += ['NR']
+    elif mode_jeu == 2 :
+        pieces_blanches += ['BRP']
+        pieces_noires += ['NRP']
+    else :
+        pieces_blanches += ['BRR']
+        pieces_noires += ['NRR']
+
+    pieces_blanches += ['BT', 'BF', 'BC']
+    pieces_noires += ['NT', 'NF', 'NC']
+    return pieces_blanches, pieces_noires
+
+
+def afficher(jeu):
+    print("  A B C D")
+    print("1", jeu[0][0], jeu[0][1], jeu[0][2], jeu[0][3])
+    print("2", jeu[1][0], jeu[1][1], jeu[1][2], jeu[1][3])
+    print("3", jeu[2][0], jeu[2][1], jeu[2][2], jeu[2][3])
+    print("4", jeu[3][0], jeu[3][1], jeu[3][2], jeu[3][3])
+    print("\n")
+
+
+def traduire_pos_en_indice(pos):
     colonne=pos[0]
     ligne=pos[1]
     # Colonne B Ligne 3 -> Indice 1 2,
@@ -17,12 +45,10 @@ def traduire_position(pos):
     indice_lig = Lignes.index(ligne)
     return indice_lig, indice_col
 
-############## PLACEMENT DES PIECES ##############
-def determiner_tour_placement(pieces_blanches, pieces_noires):
-    if len(pieces_blanches) >= len(pieces_noires) : # S'il y a moins de pieces noires alors c'est au tour des blancs
-        return 'BLANCS'
-    else :
-        return 'NOIRS'
+
+def traduire_indice_en_pos(ligne, colonne):
+    pos=Colonnes[colonne]+Lignes[ligne]
+    return pos
 
 
 def copier_plateau(jeu):
@@ -35,18 +61,7 @@ def copier_plateau(jeu):
     return n_jeu
 
 
-def placer_piece(piece,pos,jeu):
-    ligne, colonne = traduire_position(pos)
-
-    if jeu[ligne][colonne] != '.': # Si la position n'est pas dispo
-        print("Choisissez une autre position, case occupée !\n")
-        return None
-    # Sinon, on place la piece
-    n_jeu=copier_plateau(jeu)
-    n_jeu[ligne][colonne] = piece
-    return n_jeu
-
-def coup_piece(piece):
+def cout_piece(piece):
     if piece=='R' or piece=='RR':
         return 5
     elif piece=='T' :
@@ -59,9 +74,13 @@ def coup_piece(piece):
         return 0
 
 
-def traduire_indice_en_pos(ligne, colonne):
-    pos=Colonnes[colonne]+Lignes[ligne]
-    return pos
+
+############## PHASE DE PLACEMENT ##############
+def determiner_tour_placement(pieces_blanches, pieces_noires):
+    if len(pieces_blanches) >= len(pieces_noires) : # S'il y a moins de pieces noires alors c'est au tour des blancs
+        return 'BLANCS'
+    else :
+        return 'NOIRS'
 
 
 def coups_possibles_placements(jeu):
@@ -72,6 +91,18 @@ def coups_possibles_placements(jeu):
             if case == '.' :
                 les_coups_possibles+=[traduire_indice_en_pos(ligne,colonne)]
     return les_coups_possibles
+
+
+def placer_piece_placement(piece, pos, jeu):
+    ligne, colonne = traduire_pos_en_indice(pos)
+
+    if jeu[ligne][colonne] != '.': # Si la position n'est pas dispo
+        print("Choisissez une autre position, case occupée !\n")
+        return None
+    # Sinon, on place la piece
+    n_jeu=copier_plateau(jeu)
+    n_jeu[ligne][colonne] = piece
+    return n_jeu
 
 
 def valMaxPlacement(jeu, pieces, alpha, beta):
@@ -94,7 +125,7 @@ def valMaxPlacement(jeu, pieces, alpha, beta):
     for coup in lesCoups:
         for piece in pieces:
             nouvellesPieces=pieces.copy()
-            nouveauJeu = placer_piece(piece, coup, jeu)
+            nouveauJeu = placer_piece_placement(piece, coup, jeu)
             nouvellesPieces.remove(piece)
             score, _, _ = valMinPlacement(nouveauJeu, nouvellesPieces, alpha, beta)
             if (score > scoreMax):
@@ -132,7 +163,7 @@ def valMinPlacement(jeu, pieces, alpha, beta):
     for coup in lesCoups:
         for piece in pieces:
             nouvellesPieces = pieces.copy()
-            nouveauJeu = placer_piece(piece, coup, jeu)
+            nouveauJeu = placer_piece_placement(piece, coup, jeu)
             nouvellesPieces.remove(piece)
             score, _, _ = valMaxPlacement(nouveauJeu, nouvellesPieces, alpha, beta)
             if (score < scoreMin):
@@ -146,11 +177,12 @@ def valMinPlacement(jeu, pieces, alpha, beta):
             beta = min(beta, score)
     return scoreMin, coupMin, pieceMin
 
+
 def lancer_tour_placement_ia(jeu,pieces):
     best_score, best_pos, best_piece = valMaxPlacement(jeu, pieces, -math.inf, +math.inf)
     if best_pos == '-f' or best_piece == '-f':
         return
-    jeu = placer_piece(best_piece,  best_pos, jeu)
+    jeu = placer_piece_placement(best_piece, best_pos, jeu)
     pieces.remove(best_piece)
     return jeu
 
@@ -166,7 +198,7 @@ def lancer_tour_placement_humain(jeu,pieces):
         pos=tab[1]
 
     print("piece : ",piece, "\tpos : ", pos) # Affichage de DEBUG
-    jeu = placer_piece(piece, pos, jeu)
+    jeu = placer_piece_placement(piece, pos, jeu)
     pieces.remove(piece)
     return jeu
 
@@ -200,32 +232,12 @@ def phase_de_placement(jeu, joueur_ia, pieces_blanches, pieces_noires):
     return jeu
 
 
-def creer_pieces(mode_jeu):
-    pieces_blanches = []
-    pieces_noires = []
-    if mode_jeu == 1 :
-        pieces_blanches += ['BR']
-        pieces_noires += ['NR']
-    elif mode_jeu == 2 :
-        pieces_blanches += ['BRP']
-        pieces_noires += ['NRP']
-    else :
-        pieces_blanches += ['BRR']
-        pieces_noires += ['NRR']
 
-    pieces_blanches += ['BT', 'BF', 'BC']
-    pieces_noires += ['NT', 'NF', 'NC']
-    return pieces_blanches, pieces_noires
-
-def afficher(jeu):
-    print("  A B C D")
-    print("1", jeu[0][0], jeu[0][1], jeu[0][2], jeu[0][3])
-    print("2", jeu[1][0], jeu[1][1], jeu[1][2], jeu[1][3])
-    print("3", jeu[2][0], jeu[2][1], jeu[2][2], jeu[2][3])
-    print("4", jeu[3][0], jeu[3][1], jeu[3][2], jeu[3][3])
-    print("\n")
+############## PHASE DE JEU ##############
+# TODO
 
 
+############## JEU ##############
 def jouer():
     # Definit le mode de jeu
     mode_jeu=0
@@ -257,7 +269,6 @@ def jouer():
     # Demarre la phase de placement
     jeu=phase_de_placement(jeu,joueur_ia,pieces_blanches.copy(),pieces_noires.copy())
     afficher(jeu)
-    print("\nPIECES BLANCHES = ", pieces_blanches,"\nPIECES NOIRES = ", pieces_noires, "\n")
 
 Colonnes = ['A', 'B', 'C', 'D']
 Lignes = ['1', '2', '3', '4']
