@@ -194,7 +194,7 @@ def lancer_tour_placement_humain(jeu,pieces):
     piece=''
     pos=''
     while (piece not in pieces) or (pos not in lesCouts) :
-        message = input("Quelle piece et a quelle position souhaitez vous jouer ? ")
+        message = input("Quelle piece et a quelle position souhaitez vous jouer ? (Exemple de format : 'BR A2' -> Reine Blanche en A2\n")
         tab=message.split(" ")
         piece=tab[0]
         pos=tab[1]
