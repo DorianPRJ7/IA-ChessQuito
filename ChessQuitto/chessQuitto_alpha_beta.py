@@ -66,10 +66,12 @@ def cout_piece(piece):
         return 5
     elif piece=='T' :
         return 4
-    elif piece=='C' or piece=='F':
+    elif piece=='C':
         return 3
-    elif piece=='RP':
+    elif piece=='F':
         return 2
+    elif piece=='RP':
+        return 1
     else :
         return 0
 
