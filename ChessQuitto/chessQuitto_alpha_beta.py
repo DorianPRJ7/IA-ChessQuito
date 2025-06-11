@@ -37,16 +37,16 @@ def afficher(jeu):
     print("\n")
 
 
-def traduire_pos_en_indist_lignece(pos):
+def traduire_pos_en_indice(pos):
     colonne=pos[0]
     ligne=pos[1]
     # Colonne B Ligne 3 -> Indist_lignece 1 2,
-    indist_lignece_col = Colonnes.index(colonne)
-    indist_lignece_lig = Lignes.index(ligne)
-    return indist_lignece_lig, indist_lignece_col
+    indice_col = Colonnes.index(colonne)
+    indice_lig = Lignes.index(ligne)
+    return indice_lig, indice_col
 
 
-def traduire_indist_lignece_en_pos(ligne, colonne):
+def traduire_indice_en_pos(ligne, colonne):
     pos=Colonnes[colonne]+Lignes[ligne]
     return pos
 
@@ -91,12 +91,12 @@ def coups_possibles_placements(jeu):
         for colonne in range(len(jeu[ligne])):
             case=jeu[ligne][colonne]
             if case == '.' :
-                les_coups_possibles+=[traduire_indist_lignece_en_pos(ligne,colonne)]
+                les_coups_possibles+=[traduire_indice_en_pos(ligne,colonne)]
     return les_coups_possibles
 
 
 def placer_piece_placement(piece, pos, jeu):
-    ligne, colonne = traduire_pos_en_indist_lignece(pos)
+    ligne, colonne = traduire_pos_en_indice(pos)
 
     if jeu[ligne][colonne] != '.': # Si la position n'est pas dist_lignespo
         print("Choisissez une autre position, case occupée !\n")
