@@ -107,7 +107,7 @@ def placer_piece_placement(piece, pos, jeu):
     return n_jeu
 
 
-def calcul_score_pieces_posees(jeu):
+def calcul_score_plateau(jeu):
     score_blancs=0
     score_noirs=0
 
@@ -246,10 +246,10 @@ def evaluer_placement(jeu, pieces_joueur):
     # print(couleur_joueur) # DEBUG
 
     if couleur_joueur=='B':
-        score_joueur, score_adv = calcul_score_pieces_posees(jeu)
+        score_joueur, score_adv = calcul_score_plateau(jeu)
         malus_joueur, malus_adv = calcul_malus_pieces_posees(jeu)
     else:
-        score_adv, score_joueur=calcul_score_pieces_posees(jeu)
+        score_adv, score_joueur=calcul_score_plateau(jeu)
         malus_adv, malus_joueur = calcul_malus_pieces_posees(jeu)
 
     return score_joueur-malus_joueur-score_adv+malus_adv
@@ -339,15 +339,30 @@ def lancer_tour_placement_ia(jeu,pieces_ia, pieces_humain):
     return jeu
 
 
-def lancer_tour_placement_humain(jeu,pieces):
+def lancer_tour_placement_humain(jeu,mode_jeu,pieces):
     lesCoups=coups_possibles_placements(jeu)
     piece=''
     pos=''
-    while (piece not in pieces) or (pos not in lesCoups) :
+    estValide=False
+    while not estValide :
         message = input("Quelle piece et a quelle position souhaitez vous jouer ? (Exemple de format : 'BR A2' -> Reine Blanche en A2)\n")
         tab=message.split(" ")
-        piece=tab[0]
-        pos=tab[1]
+
+        if len(tab)==2 : # Si la taille de la saisie est valide
+            piece = tab[0]
+            pos = tab[1]
+            if(piece in pieces) and (pos in lesCoups) : # Si la piece ET la position sont valides,
+                if mode_jeu==3 and len(pieces)==4: # Si on est en mode 3 ET qu'on est au premier tour
+                    if piece[1:]=="RR": # Si la valeur de la piece est le ROI, alors c'est valide
+                        estValide=True
+                    else: # Sinon on affiche message d'invalidité de la piece à poser
+                        print("Votre Roi doit être placé en premier !")
+                else: # Sinon (= si on est dans un autre mode ou pas au premier tour du mode 3), alors c'est valide
+                    estValide=True
+            else: # Sinon on affiche un message d'invalidité de la piece ou position
+                print("Piece ou Position invalide !")
+        else:
+            print("Saisie invalide ! Format : PIECE POS -> Ex : 'BF A2'")
 
     print("piece : ",piece, "\tpos : ", pos) # Affichage de DEBUG
     jeu = placer_piece_placement(piece, pos, jeu)
@@ -355,7 +370,7 @@ def lancer_tour_placement_humain(jeu,pieces):
     return jeu
 
 
-def phase_de_placement(jeu, joueur_ia, pieces_ia, pieces_humain):
+def phase_de_placement(jeu,mode_jeu, joueur_ia, pieces_ia, pieces_humain):
     print("\n\t*********** DEBUT DE PHASE DE PLACEMENT ***********\n")
 
     while len(pieces_ia) > 0 or len(pieces_humain) > 0 :
@@ -373,7 +388,7 @@ def phase_de_placement(jeu, joueur_ia, pieces_ia, pieces_humain):
             print("\n\t*********** TOUR HUMAIN ***********\n")
             print("Pieces a placer => ", pieces_humain, "\n")
             afficher(jeu)
-            jeu=lancer_tour_placement_humain(jeu,pieces_humain)
+            jeu=lancer_tour_placement_humain(jeu,mode_jeu,pieces_humain)
 
         # Affiche l'etat du jeu
         print("\n\t*********** FIN DU TOUR ***********\n")
@@ -416,7 +431,7 @@ def jouer():
     afficher(jeu)
 
     # Demarre la phase de placement
-    jeu=phase_de_placement(jeu,joueur_ia,pieces_ia.copy(),pieces_humain.copy())
+    jeu=phase_de_placement(jeu,mode_jeu,joueur_ia,pieces_ia.copy(),pieces_humain.copy())
     afficher(jeu)
 
 Colonnes = ['A', 'B', 'C', 'D']
