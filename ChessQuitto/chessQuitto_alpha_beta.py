@@ -161,11 +161,11 @@ def peutAttaquer(jeu, val_piece, ligne_piece, colonne_piece, ligne_cible, colonn
     return False
 
 
-def coord_roi_adverse(jeu, couleur_adv):
+def coord_roi(jeu, couleur):
     for ligne in range(4): # Pour chaque ligne et chaque colonne
         for colonne in range(4):
             piece=jeu[ligne][colonne]
-            if piece[0]==couleur_adv and piece[1:]=='RR': # Si la piece courante est le roi adverse
+            if piece[0]==couleur and piece[1:]=='RR': # Si la piece courante est le roi adverse
                 return ligne, colonne # on retourne les coords
 
     return -1, -1 # Si on a pas trouvé, on retourne -1 -1
@@ -175,18 +175,54 @@ def roi_adverse_en_echec(jeu, couleur_adv, pieces_adv):
     if len(pieces_adv)==4: # Si le roi adverse n'est pas encore placé alors False
         return False
 
-    ligne, colonne = coord_roi_adverse(jeu, couleur_adv)
+    ligne, colonne = coord_roi(jeu, couleur_adv)
     if ligne==-1 and colonne==-1: # Si coord_roi_adverse renvoie -1 -1 alors False
         return False
 
-    for i in range(4): # Pour chaque ligne et chaque colonne
-        for j in range(4):
-            piece=jeu[i][j]
-            if piece!='.' and piece[0]!=couleur_adv: # Si la piece courante n'est pas une piece adverse
-                if peutAttaquer(jeu,piece[1:], i, j, ligne, colonne): # Si la piece courante peut attaquer la case où se trouve le roi
-                    return True # Alors on retourne True
+    if couleur_adv=='B': # Si l'adversaire est blanc mes pieces sont noires, sinon elles sont blanches
+        mes_pieces=positions_pieces(jeu, 'N')
+    else:
+        mes_pieces=positions_pieces(jeu, 'B')
+    for piece in mes_pieces:
+        i=piece[0]
+        j=piece[1]
+        la_piece=jeu[i][j]
+        if peutAttaquer(jeu, la_piece[1:], i, j, ligne, colonne):
+            return True
 
     return False # Si aucune piece ne peut attaquer le roi alors False
+
+def piece_est_au_centre(ligne, colonne):
+    if (ligne==1 or ligne==2) and (colonne==1 or colonne==2):
+        return True
+    return False
+
+
+def positions_pieces(jeu, couleur):
+    positions = []
+    for i in range(4):
+        for j in range(4):
+            piece=jeu[i][j]
+            if (piece!='.') and (piece[0]==couleur):
+                positions+=[(i,j)]
+    return positions
+
+
+def piece_est_menacee(jeu, ligne, colonne, couleur):
+    if couleur=='B':
+        ennemis = positions_pieces(jeu, 'N')
+    else:
+        ennemis = positions_pieces(jeu, 'B')
+
+    for pos in ennemis:
+        i=pos[0]
+        j=pos[1]
+        piece=jeu[i][j]
+        if(piece!='.') and (piece[0]!=couleur):
+            if peutAttaquer(jeu, piece[1:], i, j, ligne, colonne):
+                return True
+
+    return False
 
 
 ############## PHASE DE PLACEMENT ##############
@@ -239,6 +275,7 @@ def calcul_score_plateau(jeu):
 def calcul_malus_piece(jeu, couleur_piece_verif, val_piece_verif, ligne, colonne):
     malus_piece=0
     cout_malus=cout_piece(val_piece_verif)
+
     for i in range(4):
         for j in range(4):
             piece=jeu[i][j]
@@ -247,7 +284,7 @@ def calcul_malus_piece(jeu, couleur_piece_verif, val_piece_verif, ligne, colonne
                 if peutAttaquer(jeu, piece[1:],i,j,ligne, colonne):
                     malus_piece+=cout_malus
 
-    return malus_piece
+    return 0.8*malus_piece
 
 
 def calcul_malus_pieces_posees(jeu):
@@ -258,23 +295,200 @@ def calcul_malus_pieces_posees(jeu):
         for colonne in range(4):
             piece=jeu[ligne][colonne]
             if piece!='.' and piece[0]=='B': # Si il y a une piece blanche alors
-                malus_blancs+=calcul_malus_piece(jeu, piece[0], piece[1:], ligne, colonne)
+                malus_blancs+= calcul_malus_piece(jeu, piece[0], piece[1:], ligne, colonne)
             elif piece!='.' and piece[0]=='N': # Sinon, si il y a une piece noire alors
                 malus_noirs += calcul_malus_piece(jeu, piece[0], piece[1:], ligne, colonne)
 
     return malus_blancs, malus_noirs
 
 
-def evaluer_placement(jeu,couleur_joueur):
-    if couleur_joueur=='B':
-        score_joueur, score_adv = calcul_score_plateau(jeu)
-        malus_joueur, malus_adv = calcul_malus_pieces_posees(jeu)
+def calcul_bonus_position_piece(val_piece, ligne, colonne):
+    bonus_position=0
+    if piece_est_au_centre(ligne, colonne): # Si la piece est au centre,
+        if val_piece == 'C':  # Si c'est un Cavalier => bien au centre
+            bonus_position += 3
+        elif val_piece == 'T':  # Si c'est une Tour => pas bien au centre
+            bonus_position -= 1
+        elif val_piece == 'F':  # Si c'est un Fou => bien au centre
+            bonus_position += 1
+        elif val_piece in ['R', 'RP']:  # Si c'est une Reine ou une Reine-Pion => bon au centre
+            bonus_position += 2
+        elif val_piece == 'RR':  # Si c'est une Reine-Roi => mauvais au centre
+            bonus_position -= 3
+    else: # Par contre, si elle est pas au centre
+        if val_piece == 'C':  # Si c'est un Cavalier => pas ouf sur les côtés
+            bonus_position -= 1.5
+        elif val_piece == 'T':  # Si c'est une Tour => bien sur les côtés
+            bonus_position += 2
+        elif val_piece == 'F':  # Si c'est un Fou => bien mais que si placé sur diagonale longue
+            if ligne == colonne or ligne + colonne == 3:
+                bonus_position += 1.5
+            else:
+                bonus_position -= 0.5
+        elif val_piece == 'RR':  # Reine-Roi : Bien mais que dans les coins dans les coins
+            if (ligne==0 or ligne==3) and (colonne==0 or colonne==3):
+                bonus_position += 3
+            else:
+                bonus_position -= 1
+    return bonus_position*0.4
+
+
+def calcul_bonus_position(jeu):
+    bonus_position_blancs=0
+    bonus_position_noirs=0
+
+    for ligne in range(4):
+        for colonne in range(4):
+            piece = jeu[ligne][colonne]
+            if piece != '.' and piece[0] == 'B':  # Si il y a une piece blanche alors
+                bonus_position_blancs += calcul_bonus_position_piece(piece[1:], ligne, colonne)
+            elif piece != '.' and piece[0] == 'N':  # Sinon, si il y a une piece noire alors
+                bonus_position_noirs += calcul_bonus_position_piece(piece[1:], ligne, colonne)
+
+    return bonus_position_blancs, bonus_position_noirs
+
+
+def calcul_bonus_attaque(jeu, ennemis,couleur_piece , val_piece, ligne, colonne):
+    bonus=0
+    for ennemi in ennemis:
+            i=ennemi[0]
+            j=ennemi[1]
+            piece=jeu[i][j]
+            if peutAttaquer(jeu, val_piece, ligne, colonne, i, j):
+                if not piece_est_menacee(jeu,ligne, colonne, couleur_piece):
+                    bonus += 1.2*cout_piece(piece[1:])
+                else:
+                    bonus += 0.5*cout_piece(piece[1:])
+    return bonus
+
+
+def bonus_attaque(jeu, couleur):
+    bonus = 0
+    allies = positions_pieces(jeu, couleur)
+    if couleur == 'B':
+        ennemis = positions_pieces(jeu, 'N')
     else:
-        score_adv, score_joueur=calcul_score_plateau(jeu)
-        malus_adv, malus_joueur = calcul_malus_pieces_posees(jeu)
+        ennemis = positions_pieces(jeu, 'B')
 
-    return score_joueur-malus_joueur-score_adv+malus_adv
+    for pos in allies:
+            i=pos[0]
+            j=pos[1]
+            piece = jeu[i][j]
+            bonus+=calcul_bonus_attaque(jeu, ennemis, couleur, piece[1:], i, j)
+    return bonus
 
+
+def bonus_soutien_entre_pieces(jeu, ma_couleur):
+    bonus = 0
+    allies = positions_pieces(jeu, ma_couleur)
+    for coord1 in allies:
+        ligne1 = coord1[0]
+        colonne1 = coord1[1]
+        piece1 = jeu[ligne1][colonne1]
+        for coord2 in allies:
+            ligne2 = coord2[0]
+            colonne2 = coord2[1]
+            piece2 = jeu[ligne2][colonne2]
+            if piece1!=piece2:
+                if peutAttaquer(jeu, piece1[1:], ligne1, colonne1, ligne2, colonne2):
+                    if piece2[1:]!='RR' and piece2[1:]!='R':
+                        bonus += 0.3*cout_piece(piece2[1:])
+                    else:
+                        bonus += 0.6*cout_piece(piece2[1:])
+    return bonus
+
+
+def mobilite_piece(jeu,couleur_piece, val_piece, ligne, colonne):
+    deplacements = 0
+    for i in range(4):
+        for j in range(4):
+            piece=jeu[i][j]
+            if peutAttaquer(jeu, val_piece, ligne, colonne, i, j):
+                if piece == '.' or piece[0] != couleur_piece:
+                    deplacements += 1
+    return deplacements
+
+
+def score_mobilite(jeu, couleur):
+    score=0
+    pieces=positions_pieces(jeu, couleur)
+    for piece in pieces:
+        i=piece[0]
+        j=piece[1]
+        la_piece=jeu[i][j]
+        score += mobilite_piece(jeu, la_piece[0], la_piece[1:], i, j)
+    return score*0.2
+
+
+def cases_controlees_par(jeu, couleur):
+    cases= []
+    pieces=positions_pieces(jeu, couleur)
+    for piece in pieces:
+        i=piece[0]
+        j=piece[1]
+        piece1 = jeu[i][j]
+        for ligne in range(4):
+            for colonne in range(4):
+                piece2=jeu[ligne][colonne]
+                if peutAttaquer(jeu, piece1[1:], i, j, ligne, colonne):
+                    if piece2== '.' or piece2[0]!=couleur:
+                        cases+= [(ligne,colonne)]
+    return cases
+
+
+def score_diversite_controle(jeu, couleur):
+    cases = cases_controlees_par(jeu, couleur)
+    return len(cases) * 0.05
+
+
+def calcul_roi_protege(jeu,couleur):
+    nbAlliesAutour=0
+    ligne_roi, colonne_roi=coord_roi(jeu,couleur)
+    allies=positions_pieces(jeu, couleur)
+
+    for pos in allies:
+        i=pos[0]
+        j=pos[1]
+        if peutAttaquer(jeu,'RR', ligne_roi, colonne_roi, i, j):
+            nbAlliesAutour+=1
+
+    return 0.7*nbAlliesAutour
+
+
+def evaluer_placement(jeu, mode_jeu, couleur_joueur):
+    if couleur_joueur == 'B':
+        couleur_adv = 'N'
+    else:
+        couleur_adv = 'B'
+
+    score_joueur, score_adv=calcul_score_plateau(jeu)
+
+    malus_joueur, malus_adv=calcul_malus_pieces_posees(jeu)
+
+    bonus_position_joueur, bonus_position_adv=calcul_bonus_position(jeu)
+
+    bonus_agressif_joueur=bonus_attaque(jeu, couleur_joueur)
+    bonus_agressif_adv=bonus_attaque(jeu, couleur_adv)
+
+    bonus_soutien_joueur=bonus_soutien_entre_pieces(jeu, couleur_joueur)
+    bonus_soutien_adv=bonus_soutien_entre_pieces(jeu, couleur_adv)
+
+    bonus_mobilite_joueur=score_mobilite(jeu, couleur_joueur)
+    bonus_mobilite_adv=score_mobilite(jeu, couleur_adv)
+
+    score_div_joueur=score_diversite_controle(jeu, couleur_joueur)
+    score_div_adv=score_diversite_controle(jeu, couleur_adv)
+
+    eval_joueur=score_joueur - malus_joueur + bonus_position_joueur + bonus_agressif_joueur + bonus_soutien_joueur + bonus_mobilite_joueur + score_div_joueur
+    eval_adv=score_adv - malus_adv + bonus_position_adv + bonus_agressif_adv + bonus_soutien_adv + bonus_mobilite_adv + score_div_adv
+
+    if mode_jeu==3 :
+        score_allies_pour_roi_joueur = calcul_roi_protege(jeu, couleur_joueur)
+        score_allies_pour_roi_adv = calcul_roi_protege(jeu, couleur_adv)
+        eval_joueur+=score_allies_pour_roi_joueur
+        eval_adv+=score_allies_pour_roi_adv
+
+    return eval_joueur - eval_adv
 
 def valMaxPlacement(jeu, mode_jeu, couleur_ia, couleur_humain, pieces_ia, pieces_humain, alpha, beta, profondeur):
     """
@@ -283,7 +497,7 @@ def valMaxPlacement(jeu, mode_jeu, couleur_ia, couleur_humain, pieces_ia, pieces
     lesCoups = coups_possibles_placements(jeu)
     if (profondeur==0) or (len(pieces_ia) == 0) or (len(lesCoups) == 0):
         # print("pieces_ia=", pieces_ia) # DEBUG
-        return evaluer_placement(jeu,couleur_ia), '-f', '-f'
+        return evaluer_placement(jeu, mode_jeu, couleur_ia), '-f', '-f'
     """
         Algorithme :: PVH
         Hypothèse : score en deçà du minimum
@@ -323,7 +537,7 @@ def valMinPlacement(jeu, mode_jeu, couleur_humain, couleur_ia, pieces_humain, pi
     lesCoups = coups_possibles_placements(jeu)
     if (profondeur == 0) or (len(pieces_humain) == 0) or (len(lesCoups) == 0):
         # print("pieces_humain=",pieces_humain) # DEBUG
-        return evaluer_placement(jeu, couleur_humain), '-f', '-f'
+        return evaluer_placement(jeu, mode_jeu, couleur_humain), '-f', '-f'
 
     """
       Algorithme :: PVH
@@ -342,7 +556,7 @@ def valMinPlacement(jeu, mode_jeu, couleur_humain, couleur_ia, pieces_humain, pi
                 nouvellesPieces.remove(piece)
                 if (mode_jeu != 3) or (not roi_adverse_en_echec(nouveauJeu, couleur_ia,pieces_ia)  and not roi_adverse_en_echec(nouveauJeu, couleur_humain, nouvellesPieces)):  # Si on est pas en mode 3 OU qu'on ne met pas le roi adverse en echec ET que le mien non plus, alors
                     score, _, _ = valMaxPlacement(nouveauJeu, mode_jeu,couleur_ia, couleur_humain, pieces_ia, nouvellesPieces, alpha, beta, profondeur-1)
-                    if (score < scoreMin):
+                    if score < scoreMin:
                         scoreMin = score
                         coupMin = coup
                         pieceMin = piece
@@ -355,7 +569,7 @@ def valMinPlacement(jeu, mode_jeu, couleur_humain, couleur_ia, pieces_humain, pi
 
 
 def lancer_tour_placement_ia(jeu, mode_jeu, couleur_ia, couleur_humain, pieces_ia, pieces_humain):
-    best_score, best_pos, best_piece = valMaxPlacement(jeu, mode_jeu,couleur_ia,couleur_humain, pieces_ia, pieces_humain, -math.inf, +math.inf, profondeur=4)
+    best_score, best_pos, best_piece = valMaxPlacement(jeu, mode_jeu,couleur_ia,couleur_humain, pieces_ia, pieces_humain, -math.inf, +math.inf, profondeur=3)
     if best_pos == '-f' or best_piece == '-f':
         return
     jeu = placer_piece_placement(best_piece, best_pos, jeu)
