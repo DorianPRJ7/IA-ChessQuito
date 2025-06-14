@@ -10,6 +10,25 @@ def nouveau_jeu():
     ]
 
 
+def afficher(jeu):
+    print("  A B C D")
+    print("1", jeu[0][0], jeu[0][1], jeu[0][2], jeu[0][3])
+    print("2", jeu[1][0], jeu[1][1], jeu[1][2], jeu[1][3])
+    print("3", jeu[2][0], jeu[2][1], jeu[2][2], jeu[2][3])
+    print("4", jeu[3][0], jeu[3][1], jeu[3][2], jeu[3][3])
+    print("\n")
+
+
+def copier_plateau(jeu):
+    n_jeu=[]
+    for ligne in jeu:
+        n_ligne = []
+        for colonne in ligne :
+            n_ligne+=[colonne]
+        n_jeu+=[n_ligne]
+    return n_jeu
+
+
 def creer_pieces(mode_jeu):
     pieces_blanches = []
     pieces_noires = []
@@ -27,38 +46,23 @@ def creer_pieces(mode_jeu):
     pieces_noires += ['NT', 'NF', 'NC']
     return pieces_blanches, pieces_noires
 
-
-def afficher(jeu):
-    print("  A B C D")
-    print("1", jeu[0][0], jeu[0][1], jeu[0][2], jeu[0][3])
-    print("2", jeu[1][0], jeu[1][1], jeu[1][2], jeu[1][3])
-    print("3", jeu[2][0], jeu[2][1], jeu[2][2], jeu[2][3])
-    print("4", jeu[3][0], jeu[3][1], jeu[3][2], jeu[3][3])
-    print("\n")
-
-
 def traduire_pos_en_indice(pos):
     colonne=pos[0]
     ligne=pos[1]
     # Colonne B Ligne 3 -> Indice 1 2
-    indice_col = Colonnes.index(colonne)
-    indice_lig = Lignes.index(ligne)
-    return indice_lig, indice_col
+    if ligne in ['1', '2', '3', '4'] and colonne in ['A', 'B', 'C', 'D']:
+        indice_col = Colonnes.index(colonne)
+        indice_lig = Lignes.index(ligne)
+        return indice_lig, indice_col
+    else:
+        return -1, -1
 
 
 def traduire_indice_en_pos(ligne, colonne):
-    pos=Colonnes[colonne]+Lignes[ligne]
-    return pos
-
-
-def copier_plateau(jeu):
-    n_jeu=[]
-    for ligne in jeu:
-        n_ligne = []
-        for colonne in ligne :
-            n_ligne+=[colonne]
-        n_jeu+=[n_ligne]
-    return n_jeu
+    if ligne>=0 and ligne<4 and colonne>=0 and colonne<4:
+        return Colonnes[colonne]+Lignes[ligne]
+    else:
+        return ''
 
 
 def cout_piece(val_piece):
@@ -74,6 +78,25 @@ def cout_piece(val_piece):
         return 1
     else :
         return 0
+
+
+def coord_roi(jeu, couleur):
+    for ligne in range(4): # Pour chaque ligne et chaque colonne
+        for colonne in range(4):
+            piece=jeu[ligne][colonne]
+            if piece[0]==couleur and piece[1:]=='RR': # Si la piece courante est le roi adverse
+                return ligne, colonne # on retourne les coords
+
+    return -1, -1 # Si on a pas trouvé, on retourne -1 -1
+
+
+def coord_piece(jeu, piece):
+    for ligne in range(4):
+        for colonne in range(4):
+            piece_courante=jeu[ligne][colonne]
+            if piece_courante==piece:
+                return ligne, colonne
+    return -1, -1
 
 
 def peutAttaquer(jeu, val_piece, ligne_piece, colonne_piece, ligne_cible, colonne_cible):
@@ -160,38 +183,6 @@ def peutAttaquer(jeu, val_piece, ligne_piece, colonne_piece, ligne_cible, colonn
 
     return False
 
-
-def coord_roi(jeu, couleur):
-    for ligne in range(4): # Pour chaque ligne et chaque colonne
-        for colonne in range(4):
-            piece=jeu[ligne][colonne]
-            if piece[0]==couleur and piece[1:]=='RR': # Si la piece courante est le roi adverse
-                return ligne, colonne # on retourne les coords
-
-    return -1, -1 # Si on a pas trouvé, on retourne -1 -1
-
-
-def roi_adverse_en_echec(jeu, couleur_adv, pieces_adv):
-    if len(pieces_adv)==4: # Si le roi adverse n'est pas encore placé alors False
-        return False
-
-    ligne, colonne = coord_roi(jeu, couleur_adv)
-    if ligne==-1 and colonne==-1: # Si coord_roi_adverse renvoie -1 -1 alors False
-        return False
-
-    if couleur_adv=='B': # Si l'adversaire est blanc mes pieces sont noires, sinon elles sont blanches
-        mes_pieces=positions_pieces(jeu, 'N')
-    else:
-        mes_pieces=positions_pieces(jeu, 'B')
-    for piece in mes_pieces:
-        i=piece[0]
-        j=piece[1]
-        la_piece=jeu[i][j]
-        if peutAttaquer(jeu, la_piece[1:], i, j, ligne, colonne):
-            return True
-
-    return False # Si aucune piece ne peut attaquer le roi alors False
-
 def piece_est_au_centre(ligne, colonne):
     if (ligne==1 or ligne==2) and (colonne==1 or colonne==2):
         return True
@@ -236,7 +227,72 @@ def piece_est_menacee(jeu, ligne, colonne, couleur):
     return False
 
 
-############## PHASE DE PLACEMENT ##############
+def roi_en_echec(jeu, couleur):
+    ligne, colonne = coord_roi(jeu, couleur)
+    if ligne==-1 and colonne==-1: # Si coord_roi_adverse renvoie -1 -1 alors False
+        return False
+
+    if couleur== 'B': # Si l'adversaire est blanc mes pieces sont noires, sinon elles sont blanches
+        mes_pieces=positions_pieces(jeu, 'N')
+    else:
+        mes_pieces=positions_pieces(jeu, 'B')
+    for piece in mes_pieces:
+        i=piece[0]
+        j=piece[1]
+        la_piece=jeu[i][j]
+        if peutAttaquer(jeu, la_piece[1:], i, j, ligne, colonne):
+            return True
+
+    return False # Si aucune piece ne peut attaquer le roi alors False
+
+
+def est_en_mat(jeu, couleur):
+    if roi_en_echec(jeu, couleur): # Si le roi est en echec
+        allies=positions_pieces(jeu, couleur)
+        for allie in allies: # Pour chaque piece allie
+            i=allie[0]
+            j=allie[1]
+            piece=jeu[i][j]
+            lesCoups=deplacements_possibles(jeu,piece,i,j)
+            for coup in lesCoups: # Pour chaque coup possible de la piece
+                nouveauJeu, _=jouer_coup(jeu,piece,coup)
+                if not roi_en_echec(nouveauJeu, couleur): # Si le coup joué permet de faire en sorte que le roi ne soit plus en echec, alors il n'y a pas mat
+                    return False
+        return True
+    else: # Sinon (si le roi n'est pas en echec), il n'y a pas mat
+        return False
+
+
+def echec_et_mat(jeu):
+    return est_en_mat(jeu,'B') or est_en_mat(jeu,'N')
+
+
+def est_en_pat(jeu, couleur):
+    if not est_en_mat(jeu,couleur): # Si on est pas en mat
+        allies=positions_pieces(jeu, couleur)
+        for allie in allies: # Pour chaque piece allie
+            i=allie[0]
+            j=allie[1]
+            piece=jeu[i][j]
+            lesCoups=deplacements_possibles(jeu,piece,i,j)
+            if len(lesCoups)>0: # Si la piece a des coups possibles
+                if piece[1:]!='RR': # Si c'est pas un roi alors on est pas en pat
+                    return False
+                else: # Si c'est le roi,
+                    for coup in lesCoups: # Pour chaque coup possible du roi
+                        nouveauJeu, _=jouer_coup(jeu,piece,coup)
+                        if not est_en_mat(nouveauJeu,couleur): # Si le coup joué fait en sorte que le roi ne soit pas en echec alors on est pas en pat
+                            return False
+        return True
+    else: # Sinon (si on est en mat), alors on est pas en pat
+        return False
+
+        # Verifier que aucun coups possibles pour tout
+
+def est_pat(jeu):
+    return est_en_pat(jeu,'N') or est_en_pat(jeu,'B')
+
+
 def determiner_tour_placement(pieces_blanches, pieces_noires):
     if len(pieces_blanches) >= len(pieces_noires) : # S'il y a moins de pieces noires alors c'est au tour des blancs
         return 'BLANCS'
@@ -246,8 +302,8 @@ def determiner_tour_placement(pieces_blanches, pieces_noires):
 
 def coups_possibles_placements(jeu):
     les_coups_possibles = []
-    for ligne in range(len(jeu)):
-        for colonne in range(len(jeu[ligne])):
+    for ligne in range(4):
+        for colonne in range(4):
             case=jeu[ligne][colonne]
             if case == '.' :
                 les_coups_possibles+=[traduire_indice_en_pos(ligne,colonne)]
@@ -266,6 +322,74 @@ def placer_piece_placement(piece, pos, jeu):
     return n_jeu
 
 
+def deplacements_possibles(jeu, piece, ligne_piece, colonne_piece):
+    positions=[]
+    for lig_dest in range(4):
+        for col_dest in range(4):
+            if peutAttaquer(jeu,piece[1:], ligne_piece, colonne_piece, lig_dest, col_dest):
+                positions+=[traduire_indice_en_pos(lig_dest,col_dest)]
+    return positions
+
+
+def jouer_coup(jeu, piece, pos):
+    ligne, colonne = traduire_pos_en_indice(pos)
+    ancienne_ligne, ancienne_colonne = coord_piece(jeu, piece)
+
+    if jeu[ligne][colonne]=='.':
+        prise=False
+    else:
+        prise=True
+
+    nouveauJeu=copier_plateau(jeu)
+    nouveauJeu[ligne][colonne]=piece
+    nouveauJeu[ancienne_ligne][ancienne_colonne]='.'
+    jeu=nouveauJeu
+
+    return jeu, prise
+
+
+def verifierFinPartie(mode_jeu, jeu, sans_prise):
+    if sans_prise>=5: # Si plus de 5 deplacements sans prises, alors fin de partie
+        return True
+
+    pos_pieces_blanches=positions_pieces(jeu, 'B')
+    pos_pieces_noires=positions_pieces(jeu, 'N')
+    if len(pos_pieces_blanches)==0 or len(pos_pieces_noires)==0: # Si un des deux joueurs n'a plus de pieces, alors fin de partie
+        return True
+
+    if mode_jeu==3: # Si on est en mode 3
+        if echec_et_mat(jeu) or est_pat(jeu): # Si on est en echec et mat ou en pat, alors fin de partie
+            return True
+
+    return False
+
+
+def determiner_victoire(jeu, mode_jeu):
+    if mode_jeu==3 and (echec_et_mat(jeu) or est_pat(jeu)):
+        if est_en_pat(jeu,'B') or est_en_pat(jeu,'N'): # Si y'a pat, y'a nul (reverifier la regle si pat Noirs, Blancs gagnant ou nul ?)
+            print("Match nul !")
+        else:
+            blancs_sont_mat=est_en_mat(jeu,'B')
+            noirs_sont_mat=est_en_mat(jeu,'N')
+            if not blancs_sont_mat and noirs_sont_mat:
+                print("Victoire des BLANCS !")
+            if blancs_sont_mat and not noirs_sont_mat:
+                print("Victoire des NOIRS !")
+            else:
+                print("Probleme dans le calcul des scores")
+
+    else:
+        score_blancs, score_noirs = calcul_score_plateau(jeu)
+        print("Score BLANCS :", score_blancs, "| Score NOIRS :", score_noirs)
+        if score_blancs > score_noirs:
+            print("Victoire des BLANCS !")
+        elif score_noirs> score_blancs:
+            print("Victoire des NOIRS !")
+        else:
+            print("Match nul !")
+
+
+############## PHASE DE PLACEMENT ##############
 def calcul_score_plateau(jeu):
     score_blancs=0
     score_noirs=0
@@ -561,32 +685,14 @@ def evaluer_placement(jeu, mode_jeu, couleur_joueur):
     eval_joueur=score_joueur - malus_joueur + bonus_position_joueur + bonus_agressif_joueur + bonus_soutien_joueur + bonus_mobilite_joueur + score_div_joueur - malus_proximite_joueur
     eval_adv=score_adv - malus_adv + bonus_position_adv + bonus_agressif_adv + bonus_soutien_adv + bonus_mobilite_adv + score_div_adv - malus_proximite_adv
 
-    # DEBUG
-    print("Plateau testé: \n")
-    afficher(jeu)
-    print("\nScore_joueur : ", score_joueur, " ; Malus_joueur : ", malus_joueur, " ; Bonus_position_joueur : ", bonus_position_joueur)
-    print("Bonus_agressif_joueur : ", bonus_agressif_joueur, " ; Bonus_soutien_joueur : ", bonus_soutien_joueur, " ; Bonus_mobilite_joueur : ", bonus_mobilite_joueur)
-    print("Score_div_joueur : ", score_div_joueur, " ; malus_proximite_joueur : ", malus_proximite_joueur)
-
-    print("\n Score_adv : ", score_adv, " ; Malus_adv : ", malus_adv, " ; Bonus_position_adv : ", bonus_position_adv)
-    print("Bonus_agressif_adv : ", bonus_agressif_adv, " ; Bonus_soutien_adv : ", bonus_soutien_adv," ; Bonus_mobilite_adv : ", bonus_mobilite_adv)
-    print("Score_div_adv : ", score_div_adv, " ; malus_proximite_adv : ", malus_proximite_adv)
-
-    # DEBUG
-
     if mode_jeu==3 :
         score_allies_pour_roi_joueur = calcul_roi_protege(jeu, couleur_joueur)
         score_allies_pour_roi_adv = calcul_roi_protege(jeu, couleur_adv)
         eval_joueur+=score_allies_pour_roi_joueur*pond_proximite_roi
         eval_adv+=score_allies_pour_roi_adv*pond_proximite_roi
 
-        # DEBUG
-        print("\nScore_allies_pour_roi_joueur : ", score_allies_pour_roi_joueur)
-        print("Score_allies_pour_roi_adv : ", score_allies_pour_roi_adv)
-        # DEBUG
-
-    print("\nScore_total_joueur : ", eval_joueur)
-    print("Score_total_adv : ", eval_adv)
+    # print("\nScore_total_joueur : ", eval_joueur) # DEBUG
+    # print("Score_total_adv : ", eval_adv) # DEBUG
 
     return eval_joueur - eval_adv
 
@@ -613,14 +719,8 @@ def valMaxPlacement(jeu, mode_jeu, couleur_ia, couleur_humain, pieces_ia, pieces
                 nouvellesPieces=pieces_ia.copy()
                 nouveauJeu = placer_piece_placement(piece, coup, jeu)
                 nouvellesPieces.remove(piece)
-                if (mode_jeu!=3) or (not roi_adverse_en_echec(nouveauJeu, couleur_humain,pieces_humain) and not roi_adverse_en_echec(nouveauJeu, couleur_ia, nouvellesPieces)): # Si on est pas en mode 3 OU qu'on ne met pas le roi adverse en echec ET que le mien non plus, alors
+                if (mode_jeu!=3) or (not roi_en_echec(nouveauJeu, couleur_humain) and not roi_en_echec(nouveauJeu, couleur_ia)): # Si on est pas en mode 3 OU qu'on ne met pas le roi adverse en echec ET que le mien non plus, alors
                     score, _, _ = valMinPlacement(nouveauJeu, mode_jeu, couleur_humain, couleur_ia, pieces_humain, nouvellesPieces, alpha, beta, profondeur-1)
-                    # DEBUG
-                    # print("COUP MAX testé : ", coup, "\t Piece MAX testée : ", piece)
-                    # print("\nPlateau MAX : ")
-                    # afficher(nouveauJeu)
-                    # print("Score MAX : ", score)
-                    # DEBUG
 
                     if score > scoreMax:
                         scoreMax = score
@@ -661,15 +761,9 @@ def valMinPlacement(jeu, mode_jeu, couleur_humain, couleur_ia, pieces_humain, pi
                 nouvellesPieces = pieces_humain.copy()
                 nouveauJeu = placer_piece_placement(piece, coup, jeu)
                 nouvellesPieces.remove(piece)
-                if (mode_jeu != 3) or (not roi_adverse_en_echec(nouveauJeu, couleur_ia,pieces_ia)  and not roi_adverse_en_echec(nouveauJeu, couleur_humain, nouvellesPieces)):  # Si on est pas en mode 3 OU qu'on ne met pas le roi adverse en echec ET que le mien non plus, alors
+                if (mode_jeu != 3) or (not roi_en_echec(nouveauJeu, couleur_ia) and not roi_en_echec(nouveauJeu, couleur_humain)):  # Si on est pas en mode 3 OU qu'on ne met pas le roi adverse en echec ET que le mien non plus, alors
                     score, _, _ = valMaxPlacement(nouveauJeu, mode_jeu,couleur_ia, couleur_humain, pieces_ia, nouvellesPieces, alpha, beta, profondeur-1)
 
-                    # DEBUG
-                    # print("COUP MIN testé : ", coup, "\t Piece MIN testée : ",piece)
-                    # print("\nPlateau MIN : ")
-                    # afficher(nouveauJeu)
-                    # print("Score MIN : ", score)
-                    # DEBUG
 
                     if score < scoreMin:
                         scoreMin = score
@@ -697,7 +791,7 @@ def lancer_tour_placement_humain(jeu, mode_jeu, couleur_adv, ma_couleur, pieces_
     piece=''
     pos=''
     estValide=False
-    nouveauJeu=jeu.copy()
+    nouveauJeu=copier_plateau(jeu)
     while not estValide :
         message = input("Quelle piece et a quelle position souhaitez vous jouer ? (Exemple de format : 'BR A2' -> Reine Blanche en A2)\n")
         tab=message.split(" ")
@@ -708,7 +802,7 @@ def lancer_tour_placement_humain(jeu, mode_jeu, couleur_adv, ma_couleur, pieces_
             if(piece in mes_pieces) and (pos in lesCoups) : # Si la piece ET la position sont valides,
                 nouveauJeu = placer_piece_placement(piece, pos, jeu)
                 if mode_jeu==3: # Si on est en mode 3 alors
-                    if not roi_adverse_en_echec(nouveauJeu, couleur_adv, pieces_adv) and not roi_adverse_en_echec(nouveauJeu, ma_couleur, mes_pieces): # Si on ne met PAS le roi adverse en echec
+                    if not roi_en_echec(nouveauJeu, couleur_adv) and not roi_en_echec(nouveauJeu, ma_couleur): # Si on ne met PAS le roi adverse en echec
                         if len(mes_pieces)!=4 or piece[1:]=="RR": # Si on est pas au premier tour OU que la valeur de la piece est le ROI, alors c'est valide
                             estValide=True
                         else: # Sinon on affiche message d'invalidité de la piece à poser
@@ -758,69 +852,172 @@ def phase_de_placement(jeu,mode_jeu, couleur_ia, couleur_humain, pieces_ia, piec
 
 
 ############## PHASE DE JEU ##############
-
-def lancer_tour_jeu_humain(jeu, couleur):
-    while True:
-        try:
-            coup = input(f"Votre tour ({couleur}) – ex: A2 A3 : ").strip().upper()
-            origine, destination = coup.split()
-            i1, j1 = traduire_pos_en_indice(origine)
-            i2, j2 = traduire_pos_en_indice(destination)
-            piece = jeu[i1][j1]
-            if piece == '.' or piece[0] != couleur:
-                print("Vous devez jouer une de vos propres pièces.")
-                continue
-            if peutAttaquer(jeu, piece[1:], i1, j1, i2, j2):
-                prise = jeu[i2][j2] != '.' and jeu[i2][j2][0] != couleur
-                jeu[i2][j2], jeu[i1][j1] = piece, '.'
-                return jeu, prise
+def lancer_tour_jeu_humain(jeu, mode_jeu, ma_couleur):
+    estValide=False
+    nouveauJeu=copier_plateau(jeu)
+    prise=0
+    while not estValide:
+        coup = input("Votre tour (Format PIECE POS -> BR A2) : ")
+        message = coup.split(" ")
+        if len(message)==2: # Si il y a bien 2 elements dans la saisie
+            piece=message[0]
+            pos=message[1]
+            allies=positions_pieces(jeu,ma_couleur)
+            coord_lig_piece, coord_col_piece = coord_piece(jeu, piece)
+            coord_lig_dest, coord_col_dest = traduire_pos_en_indice(pos)
+            if (coord_lig_piece, coord_col_piece) in allies:
+            # Si les coords de ma pieces sont dans les pos allies => la piece est bien a moi et elle existe
+                if not (coord_lig_dest, coord_col_dest) in allies and coord_lig_dest!=-1 and coord_col_piece!=-1:
+                # Si les coords de la case de destination ne sont pas dans les pos allies mais qu'elles sont valides => La case de destination n'est pas une de mes pieces, donc soit une piece adverse soit une case vide
+                    if peutAttaquer(jeu,piece[1:], coord_lig_piece, coord_col_piece, coord_lig_dest, coord_col_dest):
+                    # Si la piece peut atteindre la case de destination
+                        nouveauJeu, prise=jouer_coup(jeu, piece, pos) # Fait semblant de jouer la piece
+                        if mode_jeu!=3 or not roi_en_echec(nouveauJeu, ma_couleur): # Si on est pas en mode 3 ou que le coup n'a pas mis ou laissé mon roi en echec
+                            estValide=True # alors c'est valide
+                        else :
+                            print("Attention à votre ROI !")
+                else:
+                    print("Coup invalide !")
             else:
-                print("Coup invalide.")
-        except:
-            print("Entrée invalide. Essayez encore.")
+                print("Piece invalide !")
+        else:
+            print("Saisie invalide !")
 
-def lancer_tour_jeu_ia(jeu, couleur_ia, couleur_adv):
-    for i1, j1 in positions_pieces(jeu, couleur_ia):
-        piece = jeu[i1][j1]
-        for i2 in range(4):
-            for j2 in range(4):
-                if peutAttaquer(jeu, piece[1:], i1, j1, i2, j2):
-                    if jeu[i2][j2] == '.' or jeu[i2][j2][0] == couleur_adv:
-                        print(f"IA joue {piece} de {traduire_indice_en_pos(i1,j1)} à {traduire_indice_en_pos(i2,j2)}")
-                        prise = jeu[i2][j2] != '.' and jeu[i2][j2][0] == couleur_adv
-                        jeu[i2][j2], jeu[i1][j1] = piece, '.'
-                        return jeu, prise
-    return jeu, False
+    jeu=nouveauJeu
+    return jeu, prise
 
-def phase_de_jeu(jeu, couleur_ia, couleur_humain):
+
+def valMaxJeu(jeu, mode_jeu, sans_prise, couleur_ia, couleur_humain, alpha, beta, profondeur):
+    """
+        Fonction recursive appelée par Machine
+    """
+    if (profondeur==0) or (verifierFinPartie(mode_jeu,jeu,sans_prise)):
+        # print("pieces_ia=", pieces_ia) # DEBUG
+        return 0, '-f', '-f'
+    """
+        Algorithme :: PVH
+        Hypothèse : score en deçà du minimum
+        Vérification : à chaque coup, màj de scoreMax et coupMax si besoin
+    """
+
+    scoreMax = -math.inf
+    coupMax = -math.inf
+    pieceMax='.'
+    allies=positions_pieces(jeu,couleur_ia)
+    for pos in allies:
+        ligne_piece=pos[0]
+        colonne_piece=pos[1]
+        piece=jeu[ligne_piece][colonne_piece]
+        lesCoups=deplacements_possibles(jeu, piece, ligne_piece, colonne_piece)
+        for coup in lesCoups:
+            nouveauJeu, prise=jouer_coup(jeu, piece, coup)
+            if (mode_jeu!=3) or (not roi_en_echec(nouveauJeu, couleur_ia)): # Si on est pas en mode 3 OU qu'on n'a pas mis notre roi en echec, alors on continue
+                if prise:
+                    sans_prise=0
+                else:
+                    sans_prise+=1
+
+                score, _, _ = valMinJeu(nouveauJeu, mode_jeu, sans_prise, couleur_ia, couleur_humain, alpha, beta, profondeur-1)
+
+                if score > scoreMax:
+                    scoreMax = score
+                    coupMax = coup
+                    pieceMax = piece
+
+                if score > beta:
+                    return score, coup, piece
+
+                alpha = max(alpha, score)
+
+    return scoreMax, coupMax, pieceMax
+
+
+def valMinJeu(jeu, mode_jeu, sans_prise, couleur_ia, couleur_humain, alpha, beta, profondeur):
+    """
+        Fonction recursive appelée par Machine
+    """
+    if (profondeur==0) or (verifierFinPartie(mode_jeu,jeu,sans_prise)):
+        # print("pieces_ia=", pieces_ia) # DEBUG
+        return 0, '-f', '-f'
+    """
+        Algorithme :: PVH
+        Hypothèse : score en deçà du minimum
+        Vérification : à chaque coup, màj de scoreMax et coupMax si besoin
+    """
+
+    scoreMin = +math.inf
+    coupMin = +math.inf
+    pieceMin='.'
+    allies=positions_pieces(jeu,couleur_humain)
+    for pos in allies:
+        ligne_piece = pos[0]
+        colonne_piece = pos[1]
+        piece=jeu[ligne_piece][colonne_piece]
+        lesCoups=deplacements_possibles(jeu, piece, ligne_piece, colonne_piece)
+        for coup in lesCoups:
+            nouveauJeu, prise=jouer_coup(jeu, piece, coup)
+            if (mode_jeu!=3) or (not roi_en_echec(nouveauJeu, couleur_humain)): # Si on est pas en mode 3 OU qu'on n'a pas mis notre roi en echec, alors on continue
+                if prise:
+                    sans_prise=0
+                else:
+                    sans_prise+=1
+
+                score, _, _ = valMaxJeu(nouveauJeu, mode_jeu, sans_prise, couleur_ia, couleur_humain, alpha, beta, profondeur-1)
+
+                if score < scoreMin:
+                    scoreMin = score
+                    coupMin = coup
+                    pieceMin = piece
+
+                if alpha >= score:
+                    return score, coup, piece
+
+                beta = min(beta, score)
+
+    return scoreMin, coupMin, pieceMin
+
+
+def lancer_tour_jeu_ia(jeu, mode_jeu, sans_prise, couleur_ia, couleur_adv):
+    best_score, best_pos, best_piece = valMaxJeu(jeu, mode_jeu, sans_prise, couleur_ia, couleur_adv, -math.inf, +math.inf, profondeur=3)
+    if best_pos == '-f' or best_piece == '-f':
+        return
+
+    jeu, prise= jouer_coup(jeu,best_piece, best_pos)
+    return jeu, prise
+
+
+
+def phase_de_jeu(jeu, mode_jeu, couleur_ia, couleur_humain):
     print("\n\t*********** DÉBUT DE PHASE DE JEU ***********\n")
+    afficher(jeu)
     tour = 'BLANCS'
     sans_prise = 0
-    while sans_prise < 5:
-        print(f"Tour actuel : {tour}")
-        if tour == couleur_humain:
-            jeu, prise = lancer_tour_jeu_humain(jeu, couleur_humain[0])
+    estTermine=False
+    while not estTermine:
+        print(f"Tour actuel : ", tour)
+        if tour==couleur_humain:
+            jeu, prise = lancer_tour_jeu_humain(jeu,mode_jeu,couleur_humain[0])
         else:
-            jeu, prise = lancer_tour_jeu_ia(jeu, couleur_ia[0], couleur_humain[0])
+            jeu, prise = lancer_tour_jeu_ia(jeu, mode_jeu, sans_prise, couleur_ia[0], couleur_humain[0])
+
         afficher(jeu)
+
         if prise:
             sans_prise = 0
         else:
             sans_prise += 1
 
-        if not positions_pieces(jeu, 'B') or not positions_pieces(jeu, 'N'):
-            break
-        tour = 'NOIRS' if tour == 'BLANCS' else 'BLANCS'
+        if tour=='BLANCS':
+            tour='NOIRS'
+        else:
+            tour='BLANCS'
+
+        estTermine=verifierFinPartie(mode_jeu, jeu, sans_prise)
 
     print("\n\t*********** FIN DE PARTIE ***********\n")
-    sb, sn = calcul_score_plateau(jeu)
-    print("Score BLANCS :", sb, "| Score NOIRS :", sn)
-    if sb > sn:
-        print("Victoire des BLANCS !")
-    elif sn > sb:
-        print("Victoire des NOIRS !")
-    else:
-        print("Match nul !")
+    return jeu
+
+
 ############## JEU ##############
 def jouer():
     # Definit le mode de jeu
@@ -851,6 +1048,11 @@ def jouer():
     # Demarre la phase de placement
     jeu=phase_de_placement(jeu,mode_jeu,couleur_ia, couleur_humain,pieces_ia.copy(),pieces_humain.copy())
     afficher(jeu)
+
+    jeu=phase_de_jeu(jeu, mode_jeu, couleur_ia, couleur_humain)
+    afficher(jeu)
+
+    determiner_victoire(jeu, mode_jeu)
 
 Colonnes = ['A', 'B', 'C', 'D']
 Lignes = ['1', '2', '3', '4']
