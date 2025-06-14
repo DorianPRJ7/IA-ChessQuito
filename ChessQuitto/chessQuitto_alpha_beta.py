@@ -643,41 +643,69 @@ def phase_de_placement(jeu,mode_jeu, couleur_ia, couleur_humain, pieces_ia, piec
 
 
 ############## PHASE DE JEU ##############
+
+def lancer_tour_jeu_humain(jeu, couleur):
+    while True:
+        try:
+            coup = input(f"Votre tour ({couleur}) – ex: A2 A3 : ").strip().upper()
+            origine, destination = coup.split()
+            i1, j1 = traduire_pos_en_indice(origine)
+            i2, j2 = traduire_pos_en_indice(destination)
+            piece = jeu[i1][j1]
+            if piece == '.' or piece[0] != couleur:
+                print("Vous devez jouer une de vos propres pièces.")
+                continue
+            if peutAttaquer(jeu, piece[1:], i1, j1, i2, j2):
+                prise = jeu[i2][j2] != '.' and jeu[i2][j2][0] != couleur
+                jeu[i2][j2], jeu[i1][j1] = piece, '.'
+                return jeu, prise
+            else:
+                print("Coup invalide.")
+        except:
+            print("Entrée invalide. Essayez encore.")
+
+def lancer_tour_jeu_ia(jeu, couleur_ia, couleur_adv):
+    for i1, j1 in positions_pieces(jeu, couleur_ia):
+        piece = jeu[i1][j1]
+        for i2 in range(4):
+            for j2 in range(4):
+                if peutAttaquer(jeu, piece[1:], i1, j1, i2, j2):
+                    if jeu[i2][j2] == '.' or jeu[i2][j2][0] == couleur_adv:
+                        print(f"IA joue {piece} de {traduire_indice_en_pos(i1,j1)} à {traduire_indice_en_pos(i2,j2)}")
+                        prise = jeu[i2][j2] != '.' and jeu[i2][j2][0] == couleur_adv
+                        jeu[i2][j2], jeu[i1][j1] = piece, '.'
+                        return jeu, prise
+    return jeu, False
+
 def phase_de_jeu(jeu, couleur_ia, couleur_humain):
     print("\n\t*********** DÉBUT DE PHASE DE JEU ***********\n")
-    nb_coups_sans_prise = 0
-    tour = 'BLANCS' if determiner_tour_placement(['dummy'], []) == 'BLANCS' else 'NOIRS'
-
-    while nb_coups_sans_prise < 5:
-        prise = False
+    tour = 'BLANCS'
+    sans_prise = 0
+    while sans_prise < 5:
         print(f"Tour actuel : {tour}")
         if tour == couleur_humain:
             jeu, prise = lancer_tour_jeu_humain(jeu, couleur_humain[0])
         else:
             jeu, prise = lancer_tour_jeu_ia(jeu, couleur_ia[0], couleur_humain[0])
         afficher(jeu)
-
         if prise:
-            nb_coups_sans_prise = 0
+            sans_prise = 0
         else:
-            nb_coups_sans_prise += 1
+            sans_prise += 1
 
-        tour = 'NOIRS' if tour == 'BLANCS' else 'BLANCS'
-
-        # Vérifier fin : un joueur n’a plus de pièces
-        if len(positions_pieces(jeu, 'B')) == 0 or len(positions_pieces(jeu, 'N')) == 0:
+        if not positions_pieces(jeu, 'B') or not positions_pieces(jeu, 'N'):
             break
+        tour = 'NOIRS' if tour == 'BLANCS' else 'BLANCS'
 
     print("\n\t*********** FIN DE PARTIE ***********\n")
     sb, sn = calcul_score_plateau(jeu)
-    print("Score BLANCS :", sb, " | Score NOIRS :", sn)
+    print("Score BLANCS :", sb, "| Score NOIRS :", sn)
     if sb > sn:
-        print("Les BLANCS gagnent !")
+        print("Victoire des BLANCS !")
     elif sn > sb:
-        print("Les NOIRS gagnent !")
+        print("Victoire des NOIRS !")
     else:
         print("Match nul !")
-
 ############## JEU ##############
 def jouer():
     # Definit le mode de jeu
