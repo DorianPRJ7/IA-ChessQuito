@@ -643,8 +643,40 @@ def phase_de_placement(jeu,mode_jeu, couleur_ia, couleur_humain, pieces_ia, piec
 
 
 ############## PHASE DE JEU ##############
-# TODO
+def phase_de_jeu(jeu, couleur_ia, couleur_humain):
+    print("\n\t*********** DÉBUT DE PHASE DE JEU ***********\n")
+    nb_coups_sans_prise = 0
+    tour = 'BLANCS' if determiner_tour_placement(['dummy'], []) == 'BLANCS' else 'NOIRS'
 
+    while nb_coups_sans_prise < 5:
+        prise = False
+        print(f"Tour actuel : {tour}")
+        if tour == couleur_humain:
+            jeu, prise = lancer_tour_jeu_humain(jeu, couleur_humain[0])
+        else:
+            jeu, prise = lancer_tour_jeu_ia(jeu, couleur_ia[0], couleur_humain[0])
+        afficher(jeu)
+
+        if prise:
+            nb_coups_sans_prise = 0
+        else:
+            nb_coups_sans_prise += 1
+
+        tour = 'NOIRS' if tour == 'BLANCS' else 'BLANCS'
+
+        # Vérifier fin : un joueur n’a plus de pièces
+        if len(positions_pieces(jeu, 'B')) == 0 or len(positions_pieces(jeu, 'N')) == 0:
+            break
+
+    print("\n\t*********** FIN DE PARTIE ***********\n")
+    sb, sn = calcul_score_plateau(jeu)
+    print("Score BLANCS :", sb, " | Score NOIRS :", sn)
+    if sb > sn:
+        print("Les BLANCS gagnent !")
+    elif sn > sb:
+        print("Les NOIRS gagnent !")
+    else:
+        print("Match nul !")
 
 ############## JEU ##############
 def jouer():
