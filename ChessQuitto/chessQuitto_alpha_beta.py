@@ -268,7 +268,7 @@ def echec_et_mat(jeu):
 
 
 def est_en_pat(jeu, couleur):
-    if not est_en_mat(jeu,couleur): # Si on est pas en mat
+    if not roi_en_echec(jeu,couleur) and not est_en_mat(jeu,couleur) : # Si on est pas, ni en echec, ni en mat
         allies=positions_pieces(jeu, couleur)
         for allie in allies: # Pour chaque piece allie
             i=allie[0]
@@ -287,7 +287,6 @@ def est_en_pat(jeu, couleur):
     else: # Sinon (si on est en mat), alors on est pas en pat
         return False
 
-        # Verifier que aucun coups possibles pour tout
 
 def est_pat(jeu):
     return est_en_pat(jeu,'N') or est_en_pat(jeu,'B')
@@ -324,10 +323,18 @@ def placer_piece_placement(piece, pos, jeu):
 
 def deplacements_possibles(jeu, piece, ligne_piece, colonne_piece):
     positions=[]
+    allies=positions_pieces(jeu, piece[0])
     for lig_dest in range(4):
         for col_dest in range(4):
-            if peutAttaquer(jeu,piece[1:], ligne_piece, colonne_piece, lig_dest, col_dest):
-                positions+=[traduire_indice_en_pos(lig_dest,col_dest)]
+            if not (lig_dest, col_dest) in allies: # Si la pos de destination n'est pas dans les pos allies
+                piece_dest=jeu[lig_dest][col_dest]
+                if piece[1:]!='RP' or piece_dest!='.' : # Si la piece n'est pas un pion ou que la piece de destination n'est pas vide
+                    if peutAttaquer(jeu,piece[1:], ligne_piece, colonne_piece, lig_dest, col_dest): # Si la piece peut l'atteindre, alors on l'ajoute
+                        positions+=[traduire_indice_en_pos(lig_dest,col_dest)]
+                else : # Sinon => Si c'est un pion et une case de destination vide
+                    if abs(lig_dest-ligne_piece)+abs(col_dest-colonne_piece)==1: # Si peut aller vers avant arriere ou cotes, alors on l'ajoute
+                        positions+=[traduire_indice_en_pos(lig_dest, col_dest)]
+
     return positions
 
 
@@ -629,67 +636,95 @@ def penalite_proximite(jeu, couleur):
 
 
 def evaluer_placement(jeu, mode_jeu, couleur_joueur):
+    if mode_jeu == 1:
+        pond_score = 1.0
+        pond_malus = 1.2
+        pond_position = 1.0
+        pond_attaque = 0.8
+        pond_soutien = 0.6
+        pond_mobilite = 0.7
+        pond_diversite = 0.7
+        pond_penalite_proximite = 0.5
+
+    elif mode_jeu == 2:
+        pond_score = 1.0
+        pond_malus = 1.5
+        pond_position = 0.3
+        pond_attaque = 0.5
+        pond_soutien = 1.3
+        pond_mobilite = 0.5
+        pond_diversite = 0.6
+        pond_penalite_proximite = 0.8
+
+    else:
+        pond_score = 1.0
+        pond_malus = 1.8
+        pond_position = 0.3
+        pond_attaque = 0.4
+        pond_soutien = 1.6
+        pond_mobilite = 0.6
+        pond_diversite = 0.8
+        pond_penalite_proximite = 1.0
+
     if couleur_joueur == 'B':
         couleur_adv = 'N'
+        score_joueur, score_adv = calcul_score_plateau(jeu)
+        malus_joueur, malus_adv = calcul_malus_pieces_posees(jeu)
+        bonus_position_joueur, bonus_position_adv = calcul_bonus_position(jeu)
     else:
         couleur_adv = 'B'
+        score_adv, score_joueur = calcul_score_plateau(jeu)
+        malus_adv, malus_joueur = calcul_malus_pieces_posees(jeu)
+        bonus_position_adv, bonus_position_joueur = calcul_bonus_position(jeu)
 
-    pond_score=1.0
-    pond_malus=0.7
-    pond_position=0.6
-    pond_attaque=1.2
-    pond_soutien=0.5
-    pond_mobilite=0.3
-    pond_diversite=0.3
-    pond_penalite_proximite=0.2
-    pond_proximite_roi=1.2
+    bonus_agressif_joueur = bonus_attaque(jeu, couleur_joueur)
+    bonus_agressif_adv = bonus_attaque(jeu, couleur_adv)
 
+    bonus_soutien_joueur = bonus_soutien_entre_pieces(jeu, couleur_joueur)
+    bonus_soutien_adv = bonus_soutien_entre_pieces(jeu, couleur_adv)
 
-    score_joueur, score_adv=calcul_score_plateau(jeu)
-    score_joueur*=pond_score
-    score_adv*=pond_score
+    bonus_mobilite_joueur = score_mobilite(jeu, couleur_joueur)
+    bonus_mobilite_adv = score_mobilite(jeu, couleur_adv)
 
-    malus_joueur, malus_adv=calcul_malus_pieces_posees(jeu)
-    malus_joueur*=pond_malus
-    malus_adv*=pond_malus
+    score_div_joueur = score_diversite_controle(jeu, couleur_joueur)
+    score_div_adv = score_diversite_controle(jeu, couleur_adv)
 
-    bonus_position_joueur, bonus_position_adv=calcul_bonus_position(jeu)
-    bonus_position_joueur*=pond_position
-    bonus_position_adv*=pond_position
+    malus_proximite_joueur = penalite_proximite(jeu, couleur_joueur)
+    malus_proximite_adv = penalite_proximite(jeu, couleur_adv)
 
-    bonus_agressif_joueur=bonus_attaque(jeu, couleur_joueur)
-    bonus_agressif_adv=bonus_attaque(jeu, couleur_adv)
-    bonus_agressif_joueur*=pond_attaque
-    bonus_agressif_adv*=pond_attaque
+    score_joueur *= pond_score
+    score_adv *= pond_score
 
-    bonus_soutien_joueur=bonus_soutien_entre_pieces(jeu, couleur_joueur)
-    bonus_soutien_adv=bonus_soutien_entre_pieces(jeu, couleur_adv)
-    bonus_soutien_joueur*=pond_soutien
-    bonus_soutien_adv*=pond_soutien
+    malus_joueur *= pond_malus
+    malus_adv *= pond_malus
 
-    bonus_mobilite_joueur=score_mobilite(jeu, couleur_joueur)
-    bonus_mobilite_adv=score_mobilite(jeu, couleur_adv)
-    bonus_mobilite_joueur*=pond_mobilite
-    bonus_mobilite_adv*=pond_mobilite
+    bonus_position_joueur *= pond_position
+    bonus_position_adv *= pond_position
 
-    score_div_joueur=score_diversite_controle(jeu, couleur_joueur)
-    score_div_adv=score_diversite_controle(jeu, couleur_adv)
-    score_div_joueur*=pond_diversite
-    score_div_adv*=pond_diversite
+    bonus_agressif_joueur *= pond_attaque
+    bonus_agressif_adv *= pond_attaque
 
-    malus_proximite_joueur=penalite_proximite(jeu, couleur_joueur)
-    malus_proximite_adv=penalite_proximite(jeu, couleur_adv)
-    malus_proximite_joueur*=pond_penalite_proximite
-    malus_proximite_adv*=pond_penalite_proximite
+    bonus_soutien_joueur *= pond_soutien
+    bonus_soutien_adv *= pond_soutien
 
-    eval_joueur=score_joueur - malus_joueur + bonus_position_joueur + bonus_agressif_joueur + bonus_soutien_joueur + bonus_mobilite_joueur + score_div_joueur - malus_proximite_joueur
-    eval_adv=score_adv - malus_adv + bonus_position_adv + bonus_agressif_adv + bonus_soutien_adv + bonus_mobilite_adv + score_div_adv - malus_proximite_adv
+    bonus_mobilite_joueur *= pond_mobilite
+    bonus_mobilite_adv *= pond_mobilite
 
-    if mode_jeu==3 :
+    score_div_joueur *= pond_diversite
+    score_div_adv *= pond_diversite
+
+    malus_proximite_joueur *= pond_penalite_proximite
+    malus_proximite_adv *= pond_penalite_proximite
+
+    eval_joueur = score_joueur - malus_joueur + bonus_position_joueur + bonus_agressif_joueur + bonus_soutien_joueur + bonus_mobilite_joueur + score_div_joueur - malus_proximite_joueur
+    eval_adv = score_adv - malus_adv + bonus_position_adv + bonus_agressif_adv + bonus_soutien_adv + bonus_mobilite_adv + score_div_adv - malus_proximite_adv
+
+    if mode_jeu == 3:
+        pond_proximite_roi = 1.8  # Roi doit être protégé par au moins une pièce
         score_allies_pour_roi_joueur = calcul_roi_protege(jeu, couleur_joueur)
         score_allies_pour_roi_adv = calcul_roi_protege(jeu, couleur_adv)
-        eval_joueur+=score_allies_pour_roi_joueur*pond_proximite_roi
-        eval_adv+=score_allies_pour_roi_adv*pond_proximite_roi
+        eval_joueur += score_allies_pour_roi_joueur * pond_proximite_roi
+        eval_adv += score_allies_pour_roi_adv * pond_proximite_roi
 
     # print("\nScore_total_joueur : ", eval_joueur) # DEBUG
     # print("Score_total_adv : ", eval_adv) # DEBUG
@@ -865,17 +900,17 @@ def lancer_tour_jeu_humain(jeu, mode_jeu, ma_couleur):
             allies=positions_pieces(jeu,ma_couleur)
             coord_lig_piece, coord_col_piece = coord_piece(jeu, piece)
             coord_lig_dest, coord_col_dest = traduire_pos_en_indice(pos)
+            piece=jeu[coord_lig_piece][coord_col_piece]
+            lesCoups=deplacements_possibles(jeu,piece,coord_lig_piece,coord_col_piece)
             if (coord_lig_piece, coord_col_piece) in allies:
             # Si les coords de ma pieces sont dans les pos allies => la piece est bien a moi et elle existe
-                if not (coord_lig_dest, coord_col_dest) in allies and coord_lig_dest!=-1 and coord_col_piece!=-1:
-                # Si les coords de la case de destination ne sont pas dans les pos allies mais qu'elles sont valides => La case de destination n'est pas une de mes pieces, donc soit une piece adverse soit une case vide
-                    if peutAttaquer(jeu,piece[1:], coord_lig_piece, coord_col_piece, coord_lig_dest, coord_col_dest):
-                    # Si la piece peut atteindre la case de destination
-                        nouveauJeu, prise=jouer_coup(jeu, piece, pos) # Fait semblant de jouer la piece
-                        if mode_jeu!=3 or not roi_en_echec(nouveauJeu, ma_couleur): # Si on est pas en mode 3 ou que le coup n'a pas mis ou laissé mon roi en echec
-                            estValide=True # alors c'est valide
-                        else :
-                            print("Attention à votre ROI !")
+                if pos in lesCoups:
+                # Si les coords de la case de destination sont dans les coups possibles pour la piece => La case de destination est valide et n'est pas une de mes pieces, donc soit une piece adverse soit une case vide
+                    nouveauJeu, prise=jouer_coup(jeu, piece, pos) # Fait semblant de jouer la piece
+                    if mode_jeu!=3 or not roi_en_echec(nouveauJeu, ma_couleur): # Si on est pas en mode 3 ou que le coup n'a pas mis ou laissé mon roi en echec
+                        estValide=True # alors c'est valide
+                    else :
+                        print("Attention à votre ROI !")
                 else:
                     print("Coup invalide !")
             else:
@@ -887,13 +922,42 @@ def lancer_tour_jeu_humain(jeu, mode_jeu, ma_couleur):
     return jeu, prise
 
 
+def evaluer_jeu(jeu, mode_jeu, couleur_joueur):
+    pond_score = 1.0
+    pond_malus = 0.7
+    pond_position = 0.6
+
+    if couleur_joueur == 'B':
+        score_joueur, score_adv = calcul_score_plateau(jeu)
+        malus_joueur, malus_adv = calcul_malus_pieces_posees(jeu)
+        bonus_position_joueur, bonus_position_adv = calcul_bonus_position(jeu)
+    else:
+        score_adv, score_joueur = calcul_score_plateau(jeu)
+        malus_adv, malus_joueur = calcul_malus_pieces_posees(jeu)
+        bonus_position_adv, bonus_position_joueur = calcul_bonus_position(jeu)
+
+    score_joueur *= pond_score
+    score_adv *= pond_score
+
+    malus_joueur *= pond_malus
+    malus_adv *= pond_malus
+
+    bonus_position_joueur *= pond_position
+    bonus_position_adv *= pond_position
+
+    eval_joueur = score_joueur - malus_joueur + bonus_position_joueur
+    eval_adv = score_adv - malus_adv + bonus_position_adv
+
+    return eval_joueur - eval_adv
+
+
 def valMaxJeu(jeu, mode_jeu, sans_prise, couleur_ia, couleur_humain, alpha, beta, profondeur):
     """
         Fonction recursive appelée par Machine
     """
     if (profondeur==0) or (verifierFinPartie(mode_jeu,jeu,sans_prise)):
         # print("pieces_ia=", pieces_ia) # DEBUG
-        return 0, '-f', '-f'
+        return evaluer_jeu(jeu, mode_jeu, couleur_ia), '-f', '-f'
     """
         Algorithme :: PVH
         Hypothèse : score en deçà du minimum
@@ -938,7 +1002,7 @@ def valMinJeu(jeu, mode_jeu, sans_prise, couleur_ia, couleur_humain, alpha, beta
     """
     if (profondeur==0) or (verifierFinPartie(mode_jeu,jeu,sans_prise)):
         # print("pieces_ia=", pieces_ia) # DEBUG
-        return 0, '-f', '-f'
+        return evaluer_jeu(jeu, mode_jeu, couleur_humain), '-f', '-f'
     """
         Algorithme :: PVH
         Hypothèse : score en deçà du minimum

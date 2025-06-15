@@ -86,6 +86,102 @@ def phase_de_placement_IA2_vs_IA3(jeu, mode_jeu, couleur_ia1, couleur_ia2, piece
     return jeu
 
 
+############## PHASE DE JEU ##############
+def phase_de_jeu_IA1_vs_IA2(jeu, mode_jeu, couleur_ia1, couleur_ia2):
+    print("\n\t*********** DÉBUT DE PHASE DE JEU ***********\n")
+    afficher(jeu)
+    tour = 'BLANCS'
+    sans_prise = 0
+    estTermine=False
+    while not estTermine:
+        print(f"Tour actuel : ", tour)
+        if tour==couleur_ia2:
+            jeu, prise = lancer_tour_jeu_ia2(jeu,mode_jeu,sans_prise, couleur_ia2[0], couleur_ia1[0])
+        else:
+            jeu, prise = lancer_tour_jeu_ia1(jeu, mode_jeu, sans_prise, couleur_ia1[0], couleur_ia2[0])
+
+        afficher(jeu)
+
+        if prise:
+            sans_prise = 0
+        else:
+            sans_prise += 1
+
+        if tour=='BLANCS':
+            tour='NOIRS'
+        else:
+            tour='BLANCS'
+
+        estTermine=verifierFinPartie(mode_jeu, jeu, sans_prise)
+
+    print("\n\t*********** FIN DE PARTIE ***********\n")
+    return jeu
+
+
+############## PHASE DE JEU ##############
+def phase_de_jeu_IA1_vs_IA3(jeu, mode_jeu, couleur_ia1, couleur_ia2):
+    print("\n\t*********** DÉBUT DE PHASE DE JEU ***********\n")
+    afficher(jeu)
+    tour = 'BLANCS'
+    sans_prise = 0
+    estTermine=False
+    while not estTermine:
+        print(f"Tour actuel : ", tour)
+        if tour==couleur_ia2:
+            jeu, prise = lancer_tour_jeu_ia3(jeu,mode_jeu,sans_prise, couleur_ia2[0], couleur_ia1[0])
+        else:
+            jeu, prise = lancer_tour_jeu_ia1(jeu, mode_jeu, sans_prise, couleur_ia1[0], couleur_ia2[0])
+
+        afficher(jeu)
+
+        if prise:
+            sans_prise = 0
+        else:
+            sans_prise += 1
+
+        if tour=='BLANCS':
+            tour='NOIRS'
+        else:
+            tour='BLANCS'
+
+        estTermine=verifierFinPartie(mode_jeu, jeu, sans_prise)
+
+    print("\n\t*********** FIN DE PARTIE ***********\n")
+    return jeu
+
+
+############## PHASE DE JEU ##############
+def phase_de_jeu_IA2_vs_IA3(jeu, mode_jeu, couleur_ia1, couleur_ia2):
+    print("\n\t*********** DÉBUT DE PHASE DE JEU ***********\n")
+    afficher(jeu)
+    tour = 'BLANCS'
+    sans_prise = 0
+    estTermine=False
+    while not estTermine:
+        print(f"Tour actuel : ", tour)
+        if tour==couleur_ia2:
+            jeu, prise = lancer_tour_jeu_ia3(jeu,mode_jeu, sans_prise, couleur_ia2[0], couleur_ia1[0])
+        else:
+            jeu, prise = lancer_tour_jeu_ia2(jeu, mode_jeu, sans_prise, couleur_ia1[0], couleur_ia2[0])
+
+        afficher(jeu)
+
+        if prise:
+            sans_prise = 0
+        else:
+            sans_prise += 1
+
+        if tour=='BLANCS':
+            tour='NOIRS'
+        else:
+            tour='BLANCS'
+
+        estTermine=verifierFinPartie(mode_jeu, jeu, sans_prise)
+
+    print("\n\t*********** FIN DE PARTIE ***********\n")
+    return jeu
+
+
 ############## JEU ##############
 def jouer(IA1, IA2, mode_jeu, couleur_ia1, couleur_ia2):
     nom_fichier ="log"+IA1+"_"+couleur_ia1+"_vs_"+IA2+"_"+couleur_ia2+"_mode"+str(mode_jeu)+".txt"
@@ -110,18 +206,52 @@ def jouer(IA1, IA2, mode_jeu, couleur_ia1, couleur_ia2):
 
     # Demarre la phase de placement
     if IA1=='IA1' and IA2=='IA2':
-        jeu=phase_de_placement_IA1_vs_IA2(jeu, mode_jeu, couleur_ia1, couleur_ia2, pieces_ia1.copy(), pieces_ia2.copy())
-    elif IA1=='IA1' and IA2=='IA3':
-        jeu=phase_de_placement_IA1_vs_IA3(jeu, mode_jeu, couleur_ia1, couleur_ia2, pieces_ia1.copy(), pieces_ia2.copy())
-    elif IA1=='IA2' and IA2=='IA3':
-        jeu=phase_de_placement_IA2_vs_IA3(jeu, mode_jeu, couleur_ia1, couleur_ia2, pieces_ia1.copy(), pieces_ia2.copy())
 
-    print("\n\t*********** FIN DES PLACEMENTS ***********\n")
-    print("\t*********** EVALUATION DU PLATEAU FINAL ***********\n")
-    print("Score Final IA1 : ", evaluer_placement1(jeu, mode_jeu, couleur_ia1))
-    print("Score Final IA2 : ", evaluer_placement2(jeu, mode_jeu, couleur_ia2))
-    print("Plateau final :\n")
-    afficher(jeu)
+        jeu=phase_de_placement_IA1_vs_IA2(jeu, mode_jeu, couleur_ia1, couleur_ia2, pieces_ia1.copy(), pieces_ia2.copy())
+        print("\t*********** EVALUATION DU PLATEAU EN FIN DE PHASE DE PLACEMENT ***********\n")
+        print("Score Final IA1 : ", evaluer_placement1(jeu, mode_jeu, couleur_ia1))
+        print("Score Final IA2 : ", evaluer_placement2(jeu, mode_jeu, couleur_ia2))
+        print("Plateau final :\n")
+        afficher(jeu)
+
+        jeu=phase_de_jeu_IA1_vs_IA2(jeu, mode_jeu, couleur_ia1, couleur_ia2)
+        print("\t*********** EVALUATION DU PLATEAU EN FIN DE PHASE DE JEU ***********\n")
+        print("Score Final IA1 : ", evaluer_placement1(jeu, mode_jeu, couleur_ia1))
+        print("Score Final IA2 : ", evaluer_placement2(jeu, mode_jeu, couleur_ia2))
+        print("Plateau final :\n")
+        afficher(jeu)
+
+    elif IA1=='IA1' and IA2=='IA3':
+
+        jeu=phase_de_placement_IA1_vs_IA3(jeu, mode_jeu, couleur_ia1, couleur_ia2, pieces_ia1.copy(), pieces_ia2.copy())
+        print("\t*********** EVALUATION DU PLATEAU EN FIN DE PHASE DE PLACEMENT ***********\n")
+        print("Score Final IA1 : ", evaluer_placement1(jeu, mode_jeu, couleur_ia1))
+        print("Score Final IA3 : ", evaluer_placement2(jeu, mode_jeu, couleur_ia2))
+        print("Plateau final :\n")
+        afficher(jeu)
+
+        jeu=phase_de_jeu_IA1_vs_IA3(jeu, mode_jeu, couleur_ia1, couleur_ia2)
+        print("\t*********** EVALUATION DU PLATEAU EN FIN DE PHASE DE JEU ***********\n")
+        print("Score Final IA1 : ", evaluer_placement1(jeu, mode_jeu, couleur_ia1))
+        print("Score Final IA3 : ", evaluer_placement2(jeu, mode_jeu, couleur_ia2))
+        print("Plateau final :\n")
+        afficher(jeu)
+
+    elif IA1=='IA2' and IA2=='IA3':
+
+        jeu=phase_de_placement_IA2_vs_IA3(jeu, mode_jeu, couleur_ia1, couleur_ia2, pieces_ia1.copy(), pieces_ia2.copy())
+        print("\t*********** EVALUATION DU PLATEAU EN FIN DE PHASE DE PLACEMENT ***********\n")
+        print("Score Final IA2 : ", evaluer_placement1(jeu, mode_jeu, couleur_ia1))
+        print("Score Final IA3 : ", evaluer_placement2(jeu, mode_jeu, couleur_ia2))
+        print("Plateau final :\n")
+        afficher(jeu)
+
+        jeu=phase_de_jeu_IA2_vs_IA3(jeu, mode_jeu, couleur_ia1, couleur_ia2)
+        print("\t*********** EVALUATION DU PLATEAU EN FIN DE PHASE DE JEU ***********\n")
+        print("Score Final IA2 : ", evaluer_placement1(jeu, mode_jeu, couleur_ia1))
+        print("Score Final IA3 : ", evaluer_placement2(jeu, mode_jeu, couleur_ia2))
+        print("Plateau final :\n")
+        afficher(jeu)
 
     reset_terminal()
 
