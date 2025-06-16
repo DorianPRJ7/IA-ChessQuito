@@ -2,15 +2,35 @@ import math
 from utilitaires import *
 
 def evaluer_placement1(jeu, mode_jeu, couleur_joueur):
-    pond_score=1.0
-    pond_malus=0.7
-    pond_position=0.6
-    pond_attaque=1.2
-    pond_soutien=0.5
-    pond_mobilite=0.3
-    pond_diversite=0.3
-    pond_penalite_proximite=0.2
-    pond_proximite_roi=1.2
+    if mode_jeu == 1:
+        pond_score = 1.0
+        pond_malus = 1.3
+        pond_position = 0.9
+        pond_attaque = 0.6
+        pond_soutien = 1.2
+        pond_mobilite = 0.8
+        pond_diversite = 0.8
+        pond_penalite_proximite = 0.6
+
+    elif mode_jeu == 2:
+        pond_score = 1.0
+        pond_malus = 1.7
+        pond_position = 0.4
+        pond_attaque = 0.5
+        pond_soutien = 1.5
+        pond_mobilite = 0.6
+        pond_diversite = 0.7
+        pond_penalite_proximite = 1.0
+
+    else:
+        pond_score = 1.0
+        pond_malus = 1.8
+        pond_position = 0.3
+        pond_attaque = 0.5
+        pond_soutien = 1.6
+        pond_mobilite = 0.6
+        pond_diversite = 0.8
+        pond_penalite_proximite = 1.1
 
 
     if couleur_joueur == 'B':
@@ -68,6 +88,7 @@ def evaluer_placement1(jeu, mode_jeu, couleur_joueur):
     eval_adv=score_adv - malus_adv + bonus_position_adv + bonus_agressif_adv + bonus_soutien_adv + bonus_mobilite_adv + score_div_adv - malus_proximite_adv
 
     if mode_jeu==3 :
+        pond_proximite_roi = 1.9
         score_allies_pour_roi_joueur = calcul_roi_protege(jeu, couleur_joueur)
         score_allies_pour_roi_adv = calcul_roi_protege(jeu, couleur_adv)
         eval_joueur+=score_allies_pour_roi_joueur*pond_proximite_roi

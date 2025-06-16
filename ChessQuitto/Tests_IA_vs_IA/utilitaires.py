@@ -10,8 +10,6 @@ def reset_terminal():
     sys.stdout = sys.__stdout__
 
 
-
-############## UTILITAIRES ##############
 def nouveau_jeu():
     return [
         ['.', '.', '.', '.'],
@@ -298,6 +296,7 @@ def est_en_pat(jeu, couleur):
     else: # Sinon (si on est en mat), alors on est pas en pat
         return False
 
+
 def est_pat(jeu):
     return est_en_pat(jeu,'N') or est_en_pat(jeu,'B')
 
@@ -384,29 +383,44 @@ def verifierFinPartie(mode_jeu, jeu, sans_prise):
 def determiner_victoire(jeu, mode_jeu):
     if mode_jeu==3 and (echec_et_mat(jeu) or est_pat(jeu)):
         if est_en_pat(jeu,'B') or est_en_pat(jeu,'N'): # Si y'a pat, y'a nul (reverifier la regle si pat Noirs, Blancs gagnant ou nul ?)
-            print("Match nul !")
+            return 'AUCUN', 'PAT'
         else:
             blancs_sont_mat=est_en_mat(jeu,'B')
             noirs_sont_mat=est_en_mat(jeu,'N')
             if not blancs_sont_mat and noirs_sont_mat:
-                print("Victoire des BLANCS !")
+                return 'BLANCS', 'ECHEC ET MAT'
             if blancs_sont_mat and not noirs_sont_mat:
-                print("Victoire des NOIRS !")
+                return 'NOIRS', 'ECHEC ET MAT'
             else:
                 print("Probleme dans le calcul des scores")
+                return
 
     else:
         score_blancs, score_noirs = calcul_score_plateau(jeu)
-        print("Score BLANCS :", score_blancs, "| Score NOIRS :", score_noirs)
-        if score_blancs > score_noirs:
-            print("Victoire des BLANCS !")
-        elif score_noirs> score_blancs:
-            print("Victoire des NOIRS !")
+        if score_blancs==0 or score_noirs==0:
+            typeVictoire='PIECES'
         else:
-            print("Match nul !")
+            typeVictoire='SANS PRISE'
+        if score_blancs > score_noirs:
+            return 'BLANCS', typeVictoire
+        elif score_noirs> score_blancs:
+
+            return 'NOIRS',typeVictoire
+        else:
+            return 'AUCUN', typeVictoire
 
 
-############## PHASE DE PLACEMENT ##############
+def afficher_victoire(victoire, typeVictoire, score_ia, score_humain, couleur_ia, couleur_humain):
+    if victoire=='AUCUN':
+        print("Match nul par ", typeVictoire, " !")
+    if victoire==couleur_ia:
+        print("IA (=",couleur_ia,") gagne par ", typeVictoire, " !")
+    elif victoire==couleur_humain:
+        print("Humain (=",couleur_humain,") gagne par ", typeVictoire, " !")
+
+    print("Score IA :", score_ia, "| Score HUMAIN :", score_humain)
+
+
 def calcul_score_plateau(jeu):
     score_blancs=0
     score_noirs=0
@@ -454,7 +468,7 @@ def calcul_malus_pieces_posees(jeu):
     return malus_blancs, malus_noirs
 
 
-def calcul_bonus_position_piece(val_piece, ligne, colonne):
+def calcul_bonus_position_piece(jeu, couleur_piece, val_piece, ligne, colonne):
     bonus_position=0
     if piece_est_au_centre(ligne, colonne): # Si la piece est au centre,
         if val_piece == 'C':  # Si c'est un Cavalier => bien au centre
@@ -479,7 +493,7 @@ def calcul_bonus_position_piece(val_piece, ligne, colonne):
             bonus_position += 1.5
         elif val_piece =='R':  # Si c'est une Reine => Bien sur les cotés
             bonus_position += 2
-        elif val_piece == 'RR':  # Reine-Roi : Bien mais que dans les coins
+        elif val_piece == 'RR':  # Reine-Roi : Bien
             bonus_position +=3
 
     elif piece_est_dans_coin(ligne, colonne):
@@ -493,8 +507,11 @@ def calcul_bonus_position_piece(val_piece, ligne, colonne):
             bonus_position += 0.5
         elif val_piece =='R':  # Si c'est une Reine => Bien sur les cotés
             bonus_position += 1
-        elif val_piece == 'RR':  # Reine-Roi : Bien mais que dans les coins
-            bonus_position += 3
+        elif val_piece == 'RR':  # Reine-Roi : Bien si protégé
+            if calcul_roi_protege(jeu, couleur_piece)>0:
+                bonus_position += 3
+            else:
+                bonus_position -= 3
 
     return bonus_position
 
@@ -507,9 +524,9 @@ def calcul_bonus_position(jeu):
         for colonne in range(4):
             piece = jeu[ligne][colonne]
             if piece != '.' and piece[0] == 'B':  # Si il y a une piece blanche alors
-                bonus_position_blancs += calcul_bonus_position_piece(piece[1:], ligne, colonne)
+                bonus_position_blancs += calcul_bonus_position_piece(jeu, piece[0], piece[1:], ligne, colonne)
             elif piece != '.' and piece[0] == 'N':  # Sinon, si il y a une piece noire alors
-                bonus_position_noirs += calcul_bonus_position_piece(piece[1:], ligne, colonne)
+                bonus_position_noirs += calcul_bonus_position_piece(jeu, piece[0], piece[1:], ligne, colonne)
 
     return bonus_position_blancs, bonus_position_noirs
 
@@ -615,13 +632,13 @@ def calcul_roi_protege(jeu,couleur):
     for pos in allies:
         i=pos[0]
         j=pos[1]
-        if peutAttaquer(jeu,'RR', ligne_roi, colonne_roi, i, j):
+        if peutAttaquer(jeu,'RR', ligne_roi, colonne_roi, i, j): # SI le roi peut attaquer la piece allie (si il est a une case de son allie)
             nbAlliesAutour+=1
 
-    if nbAlliesAutour>2 : # Si trop d'allies autour alors malus
-        bonusAlliesAutour=-2
+    if nbAlliesAutour>1 : # Si trop d'allies autour alors malus
+        bonusAlliesAutour=-nbAlliesAutour
     else : # Sinon c'est bien
-        bonusAlliesAutour=2*nbAlliesAutour
+        bonusAlliesAutour=nbAlliesAutour
 
     return bonusAlliesAutour
 
@@ -636,14 +653,17 @@ def penalite_proximite(jeu, couleur):
     for pos1 in allies:
         i1=pos1[0]
         j1=pos1[1]
+        piece_allie=jeu[i1][j1]
         for pos2 in ennemis:
             i2=pos2[0]
             j2=pos2[1]
             if max(abs(i1-i2), abs(j1-j2)) == 1:
-                penalite += 3
+                if piece_allie[1:] == 'RR' or piece_allie[1:] == 'R':
+                    penalite += 6
+                else:
+                    penalite += 3
 
     return penalite
-
 
 
 Colonnes = ['A', 'B', 'C', 'D']

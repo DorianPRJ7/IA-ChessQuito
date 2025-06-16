@@ -88,7 +88,7 @@ def evaluer_placement3(jeu, mode_jeu, couleur_joueur):
     eval_adv=score_adv - malus_adv + bonus_position_adv + bonus_agressif_adv + bonus_soutien_adv + bonus_mobilite_adv + score_div_adv - malus_proximite_adv
 
     if mode_jeu == 3:
-        pond_proximite_roi = 1.8  # Roi doit être protégé par au moins une pièce
+        pond_proximite_roi = 1.8
         score_allies_pour_roi_joueur = calcul_roi_protege(jeu, couleur_joueur)
         score_allies_pour_roi_adv = calcul_roi_protege(jeu, couleur_adv)
         eval_joueur += score_allies_pour_roi_joueur * pond_proximite_roi
