@@ -697,14 +697,17 @@ def calcul_mat(jeu, couleur_adv):
 
 def calcul_echec_au_roi(jeu, couleur_adv):
     nbEchecAuRoi=0
+    bonus=0
     for i in range(4):
         for j in range(4):
             piece=jeu[i][j]
             if piece[0]!=couleur_adv:
-                ligne_roi, colonne_roi=coord_roi(jeu,piece)
+                ligne_roi, colonne_roi=coord_roi(jeu,couleur_adv)
                 if peutAttaquer(jeu,piece[1:],i,j,ligne_roi, colonne_roi):
                     nbEchecAuRoi+=1
-    return nbEchecAuRoi*2
+                if not piece_est_menacee(jeu,i,j,piece[0]):
+                    bonus+=1
+    return nbEchecAuRoi*bonus
 
 
 def calcul_pat(jeu, couleur_adv):
@@ -1214,7 +1217,7 @@ def evaluer_jeu(jeu, mode_jeu, sans_prise, couleur_joueur, couleur_adv):
     elif mode_jeu == 3:
         pond_mat = 3
         pond_echec = 2
-        pond_pat = 1.5
+        pond_pat = 3
         score_mat_joueur = calcul_mat(jeu, couleur_adv)*pond_mat
         score_mat_adv = calcul_mat(jeu, couleur_joueur)*pond_mat
         score_echec_joueur = calcul_echec_au_roi(jeu, couleur_adv)*pond_echec
