@@ -11,12 +11,45 @@ def nouveau_jeu():
 
 
 def afficher(jeu):
-    print("  A B C D")
-    print("1", jeu[0][0], jeu[0][1], jeu[0][2], jeu[0][3])
-    print("2", jeu[1][0], jeu[1][1], jeu[1][2], jeu[1][3])
-    print("3", jeu[2][0], jeu[2][1], jeu[2][2], jeu[2][3])
-    print("4", jeu[3][0], jeu[3][1], jeu[3][2], jeu[3][3])
-    print("\n")
+    max_contenu = 0
+    for ligne in jeu:
+        for case in ligne:
+            if len(case) > max_contenu:
+                max_contenu = len(case)
+    for c in Colonnes:
+        if len(c) > max_contenu:
+            max_contenu = len(c)
+
+    w = max_contenu + 2  # largeur d'une case avec espace autour
+
+
+    ligne_entete = "  "  # Deux espaces pour l'alignement avec les lignes
+    for c in Colonnes:
+        espace = w - len(c)
+        gauche = int(espace / 2)
+        droite = espace - gauche
+        ligne_entete = ligne_entete + (" " * gauche) + c + (" " * droite)
+    print(ligne_entete)
+
+    for i in range(len(jeu)):
+        if i + 1 == 1:
+            ligne = "1 "
+        elif i + 1 == 2:
+            ligne = "2 "
+        elif i + 1 == 3:
+            ligne = "3 "
+        elif i + 1 == 4:
+            ligne = "4 "
+        else:
+            ligne = str(i + 1) + " "
+
+        for case in jeu[i]:
+            espace = w - len(case)
+            gauche = int(espace / 2)
+            droite = espace - gauche
+            ligne = ligne + (" " * gauche) + case + (" " * droite)
+        print(ligne)
+    print()
 
 
 def copier_plateau(jeu):
@@ -1074,11 +1107,11 @@ def lancer_tour_jeu_humain(jeu, mode_jeu, ma_couleur):
 def evaluer_jeu(jeu, mode_jeu, sans_prise, couleur_joueur, couleur_adv):
     if mode_jeu == 1:
         pond_score = 2.0
-        pond_malus = 1.5
-        pond_position = 0.5
-        pond_attaque = 1.5
-        pond_mobilite = 0.2
-        pond_soutien = 0.5
+        pond_malus = 1.0
+        pond_position = 1.2
+        pond_attaque = 1.3
+        pond_soutien = 1.0
+        pond_mobilite = 0.9
 
     elif mode_jeu == 2:
 
