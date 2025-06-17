@@ -309,13 +309,10 @@ def est_en_pat(jeu, couleur):
             piece=jeu[i][j]
             lesCoups=deplacements_possibles(jeu,piece,i,j)
             if len(lesCoups)>0: # Si la piece a des coups possibles
-                if piece[1:]!='RR': # Si c'est pas un roi alors on est pas en pat
-                    return False
-                else: # Si c'est le roi,
-                    for coup in lesCoups: # Pour chaque coup possible du roi
-                        nouveauJeu, _=jouer_coup(jeu,piece,coup)
-                        if not est_en_mat(nouveauJeu,couleur): # Si le coup joué fait en sorte que le roi ne soit pas en echec alors on est pas en pat
-                            return False
+                for coup in lesCoups:  # Pour chaque coup possible du roi
+                    nouveauJeu, _ = jouer_coup(jeu, piece, coup)
+                    if not roi_en_echec(nouveauJeu,couleur) and not est_en_mat(nouveauJeu,couleur):  # Si le coup joué fait en sorte que le roi ne soit pas en echec alors on est pas en pat
+                        return False
         return True
     else: # Sinon (si on est en mat), alors on est pas en pat
         return False
@@ -388,17 +385,18 @@ def jouer_coup(jeu, piece, pos):
 
 
 def verifierFinPartie(mode_jeu, jeu, sans_prise):
-    if sans_prise>=5: # Si plus de 5 deplacements sans prises, alors fin de partie
-        return True
+    print("SansPrise :", sans_prise,"echec et mat :",echec_et_mat(jeu),"pat :",est_pat(jeu))
+    if mode_jeu==3: # Si on est en mode 3
+        if echec_et_mat(jeu) or est_pat(jeu): # Si on est en echec et mat ou en pat, alors fin de partie
+            return True
 
     pos_pieces_blanches=positions_pieces(jeu, 'B')
     pos_pieces_noires=positions_pieces(jeu, 'N')
     if len(pos_pieces_blanches)==0 or len(pos_pieces_noires)==0: # Si un des deux joueurs n'a plus de pieces, alors fin de partie
         return True
 
-    if mode_jeu==3: # Si on est en mode 3
-        if echec_et_mat(jeu) or est_pat(jeu): # Si on est en echec et mat ou en pat, alors fin de partie
-            return True
+    if sans_prise>=5: # Si plus de 5 deplacements sans prises, alors fin de partie
+        return True
 
     return False
 
