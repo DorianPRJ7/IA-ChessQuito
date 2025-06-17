@@ -466,7 +466,7 @@ def calcul_bonus_position_piece(jeu, couleur_piece, val_piece, ligne, colonne):
         if val_piece == 'C':  # Si c'est un Cavalier => bien au centre
             bonus_position += 3
         elif val_piece == 'T':  # Si c'est une Tour => pas bien au centre
-            bonus_position -= 1
+            bonus_position -= 2
         elif val_piece == 'F':  # Si c'est un Fou => bien au centre
             bonus_position += 1
         elif val_piece in ['R', 'RP']:  # Si c'est une Reine ou une Reine-Pion => bon au centre
@@ -475,8 +475,8 @@ def calcul_bonus_position_piece(jeu, couleur_piece, val_piece, ligne, colonne):
             bonus_position -= 5
 
     elif piece_est_sur_le_cote(ligne, colonne): # Sinon si c'est sur le coté
-        if val_piece == 'C':  # Si c'est un Cavalier => pas ouf sur les côtés
-            bonus_position -= 1.5
+        if val_piece == 'C':  # Si c'est un Cavalier => pas mauvais sur les côtés
+            bonus_position += 2
         elif val_piece == 'T':  # Si c'est une Tour => bien sur les côtés
             bonus_position += 2
         elif val_piece == 'F':  # Si c'est un Fou => bien sur les cotés
@@ -489,15 +489,15 @@ def calcul_bonus_position_piece(jeu, couleur_piece, val_piece, ligne, colonne):
             bonus_position +=3
 
     elif piece_est_dans_coin(ligne, colonne):
-        if val_piece == 'C':  # Si c'est un Cavalier => Pas mauvais dans les coins
-            bonus_position += 2
+        if val_piece == 'C':  # Si c'est un Cavalier => Mauvais dans les coins
+            bonus_position -= 2
         elif val_piece == 'T':  # Si c'est une Tour => Bon dans les coins
             bonus_position += 2
         elif val_piece == 'F':  # Si c'est un Fou => Pas ouf dans les coins
             bonus_position += 0.5
         elif val_piece=='RP': # Si c'est une Reine-Pion => Pas ouf dans les coins
             bonus_position += 0.5
-        elif val_piece =='R':  # Si c'est une Reine => Bien sur les cotés
+        elif val_piece =='R':  # Si c'est une Reine =>
             bonus_position += 1
         elif val_piece == 'RR':  # Reine-Roi : Bien si protégé
             if calcul_roi_protege(jeu, couleur_piece)>0:
@@ -1189,13 +1189,13 @@ def evaluer_jeu(jeu, mode_jeu, sans_prise, couleur_joueur, couleur_adv):
     return eval_joueur - eval_adv
 
 
-def valMaxJeu(jeu, mode_jeu, sans_prise, couleur_joueur, couleur_adv, alpha, beta, profondeur):
+def valMaxJeu(jeu, mode_jeu, sans_prise, couleur_ia, couleur_humain, alpha, beta, profondeur):
     """
         Fonction recursive appelée par Machine
     """
     if (profondeur==0) or (verifierFinPartie(mode_jeu,jeu,sans_prise)):
         # print("pieces_ia=", pieces_ia) # DEBUG
-        return evaluer_jeu(jeu, mode_jeu,sans_prise, couleur_joueur, couleur_adv), '-f', '-f'
+        return evaluer_jeu(jeu, mode_jeu, sans_prise, couleur_ia, couleur_humain), '-f', '-f'
     """
         Algorithme :: PVH
         Hypothèse : score en deçà du minimum
@@ -1205,7 +1205,7 @@ def valMaxJeu(jeu, mode_jeu, sans_prise, couleur_joueur, couleur_adv, alpha, bet
     scoreMax = -math.inf
     coupMax = -math.inf
     pieceMax='.'
-    allies=positions_pieces(jeu,couleur_joueur)
+    allies=positions_pieces(jeu, couleur_ia)
     for pos in allies:
         ligne_piece=pos[0]
         colonne_piece=pos[1]
@@ -1214,13 +1214,13 @@ def valMaxJeu(jeu, mode_jeu, sans_prise, couleur_joueur, couleur_adv, alpha, bet
         for coup in lesCoups:
             nouveauJeu, prise=jouer_coup(jeu, piece, coup)
             sans_prise_bis=sans_prise
-            if (mode_jeu!=3) or (not roi_en_echec(nouveauJeu, couleur_joueur)): # Si on est pas en mode 3 OU qu'on n'a pas mis notre roi en echec, alors on continue
+            if (mode_jeu!=3) or (not roi_en_echec(nouveauJeu, couleur_ia)): # Si on est pas en mode 3 OU qu'on n'a pas mis notre roi en echec, alors on continue
                 if prise:
                     sans_prise_bis=0
                 else:
                     sans_prise_bis+=1
 
-                score, _, _ = valMinJeu(nouveauJeu, mode_jeu, sans_prise_bis, couleur_adv, couleur_joueur, alpha, beta, profondeur-1)
+                score, _, _ = valMinJeu(nouveauJeu, mode_jeu, sans_prise_bis, couleur_humain, couleur_ia, alpha, beta, profondeur - 1)
 
 
                 if score > scoreMax:
@@ -1236,13 +1236,13 @@ def valMaxJeu(jeu, mode_jeu, sans_prise, couleur_joueur, couleur_adv, alpha, bet
     return scoreMax, coupMax, pieceMax
 
 
-def valMinJeu(jeu, mode_jeu, sans_prise, couleur_joueur, couleur_adv, alpha, beta, profondeur):
+def valMinJeu(jeu, mode_jeu, sans_prise, couleur_humain, couleur_ia, alpha, beta, profondeur):
     """
         Fonction recursive appelée par Machine
     """
     if (profondeur==0) or (verifierFinPartie(mode_jeu,jeu,sans_prise)):
         # print("pieces_ia=", pieces_ia) # DEBUG
-        return evaluer_jeu(jeu, mode_jeu,sans_prise, couleur_adv, couleur_joueur), '-f', '-f'
+        return evaluer_jeu(jeu, mode_jeu, sans_prise, couleur_humain, couleur_ia), '-f', '-f'
     """
         Algorithme :: PVH
         Hypothèse : score en deçà du minimum
@@ -1252,7 +1252,7 @@ def valMinJeu(jeu, mode_jeu, sans_prise, couleur_joueur, couleur_adv, alpha, bet
     scoreMin = +math.inf
     coupMin = +math.inf
     pieceMin='.'
-    allies=positions_pieces(jeu,couleur_adv)
+    allies=positions_pieces(jeu, couleur_humain)
     for pos in allies:
         ligne_piece = pos[0]
         colonne_piece = pos[1]
@@ -1261,13 +1261,13 @@ def valMinJeu(jeu, mode_jeu, sans_prise, couleur_joueur, couleur_adv, alpha, bet
         for coup in lesCoups:
             nouveauJeu, prise=jouer_coup(jeu, piece, coup)
             sans_prise_bis=sans_prise
-            if (mode_jeu!=3) or (not roi_en_echec(nouveauJeu, couleur_adv)): # Si on est pas en mode 3 OU qu'on n'a pas mis notre roi en echec, alors on continue
+            if (mode_jeu!=3) or (not roi_en_echec(nouveauJeu, couleur_humain)): # Si on est pas en mode 3 OU qu'on n'a pas mis notre roi en echec, alors on continue
                 if prise:
                     sans_prise_bis=0
                 else:
                     sans_prise_bis+=1
 
-                score, _, _ = valMaxJeu(nouveauJeu, mode_jeu, sans_prise_bis, couleur_joueur, couleur_adv, alpha, beta, profondeur-1)
+                score, _, _ = valMaxJeu(nouveauJeu, mode_jeu, sans_prise_bis, couleur_ia, couleur_humain, alpha, beta, profondeur - 1)
 
                 if score < scoreMin:
                     scoreMin = score
