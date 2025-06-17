@@ -11,12 +11,45 @@ def nouveau_jeu():
 
 
 def afficher(jeu):
-    print("  A B C D")
-    print("1", jeu[0][0], jeu[0][1], jeu[0][2], jeu[0][3])
-    print("2", jeu[1][0], jeu[1][1], jeu[1][2], jeu[1][3])
-    print("3", jeu[2][0], jeu[2][1], jeu[2][2], jeu[2][3])
-    print("4", jeu[3][0], jeu[3][1], jeu[3][2], jeu[3][3])
-    print("\n")
+    max_contenu = 0
+    for ligne in jeu:
+        for case in ligne:
+            if len(case) > max_contenu:
+                max_contenu = len(case)
+    for c in Colonnes:
+        if len(c) > max_contenu:
+            max_contenu = len(c)
+
+    w = max_contenu + 2  # largeur d'une case avec espace autour
+
+
+    ligne_entete = "  "  # Deux espaces pour l'alignement avec les lignes
+    for c in Colonnes:
+        espace = w - len(c)
+        gauche = int(espace / 2)
+        droite = espace - gauche
+        ligne_entete = ligne_entete + (" " * gauche) + c + (" " * droite)
+    print(ligne_entete)
+
+    for i in range(len(jeu)):
+        if i + 1 == 1:
+            ligne = "1 "
+        elif i + 1 == 2:
+            ligne = "2 "
+        elif i + 1 == 3:
+            ligne = "3 "
+        elif i + 1 == 4:
+            ligne = "4 "
+        else:
+            ligne = str(i + 1) + " "
+
+        for case in jeu[i]:
+            espace = w - len(case)
+            gauche = int(espace / 2)
+            droite = espace - gauche
+            ligne = ligne + (" " * gauche) + case + (" " * droite)
+        print(ligne)
+    print()
 
 
 def copier_plateau(jeu):
@@ -1070,12 +1103,12 @@ def lancer_tour_jeu_humain(jeu, mode_jeu, ma_couleur):
 def evaluer_jeu(jeu, mode_jeu, couleur_joueur):
     if mode_jeu == 1:
         pond_score = 2.0
-        pond_malus = 1.2
-        pond_position = 1.0
-        pond_attaque = 1.0
-        pond_soutien = 0.8
-        pond_mobilite = 0.7
-        pond_diversite = 0.6
+        pond_malus = 1.0
+        pond_position = 1.2
+        pond_attaque = 1.3
+        pond_soutien = 1.0
+        pond_mobilite = 0.9
+        pond_diversite = 0.8
 
     elif mode_jeu == 2:
         pond_score = 2.0
@@ -1145,8 +1178,8 @@ def evaluer_jeu(jeu, mode_jeu, couleur_joueur):
     eval_adv = score_adv - malus_adv + bonus_position_adv + bonus_agressif_adv + bonus_soutien_adv + bonus_mobilite_adv + score_div_adv
 
     if mode_jeu==1 or mode_jeu==2 :
-        pond_ecart_de_score = 2
-        pond_grosses_pieces_en_vie = 2
+        pond_ecart_de_score = 3.0
+        pond_grosses_pieces_en_vie = 3.0
 
         bonus_grosses_pieces_en_vie_joueur = calcul_grosses_pieces_en_vie(jeu, couleur_joueur) * pond_grosses_pieces_en_vie
         bonus_grosses_pieces_en_vie_adv = calcul_grosses_pieces_en_vie(jeu, couleur_adv) * pond_grosses_pieces_en_vie
@@ -1158,8 +1191,8 @@ def evaluer_jeu(jeu, mode_jeu, couleur_joueur):
         if mode_jeu==1:
             pond_reine_en_vie=1.5
             pond_protection_reine=1.5
-            pond_attaque_reine=1.5
-            pond_reine_en_danger=3
+            pond_attaque_reine=2.0
+            pond_reine_en_danger=4.0
 
             bonus_reine_en_vie_joueur=calcul_bonus_reine_en_vie(jeu, couleur_joueur)*pond_reine_en_vie
             bonus_reine_en_vie_adv = calcul_bonus_reine_en_vie(jeu, couleur_adv)*pond_reine_en_vie
