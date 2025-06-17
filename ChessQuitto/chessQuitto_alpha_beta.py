@@ -535,6 +535,8 @@ def calcul_bonus_position_piece(jeu, couleur_piece, val_piece, ligne, colonne):
             else:
                 bonus_position -= 5
 
+    if not piece_est_menacee(jeu,ligne,colonne,couleur_piece):
+        bonus_position *= 2
     return bonus_position
 
 
