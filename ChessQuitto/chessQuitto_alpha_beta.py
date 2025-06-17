@@ -397,7 +397,6 @@ def determiner_victoire(jeu, mode_jeu):
         if score_blancs > score_noirs:
             return 'BLANCS', typeVictoire
         elif score_noirs> score_blancs:
-
             return 'NOIRS',typeVictoire
         else:
             return 'AUCUN', typeVictoire
@@ -473,7 +472,7 @@ def calcul_bonus_position_piece(jeu, couleur_piece, val_piece, ligne, colonne):
         elif val_piece in ['R', 'RP']:  # Si c'est une Reine ou une Reine-Pion => bon au centre
             bonus_position += 2
         elif val_piece == 'RR':  # Si c'est une Reine-Roi => mauvais au centre
-            bonus_position -= 3
+            bonus_position -= 5
 
     elif piece_est_sur_le_cote(ligne, colonne): # Sinon si c'est sur le coté
         if val_piece == 'C':  # Si c'est un Cavalier => pas ouf sur les côtés
@@ -504,7 +503,7 @@ def calcul_bonus_position_piece(jeu, couleur_piece, val_piece, ligne, colonne):
             if calcul_roi_protege(jeu, couleur_piece)>0:
                 bonus_position += 3
             else:
-                bonus_position -= 3
+                bonus_position -= 5
 
     return bonus_position
 
@@ -696,8 +695,7 @@ def calcul_grosses_pieces_en_vie(jeu, couleur_joueur):
 
     if bonus!=0:
         return bonus
-    else:
-        return -3
+    return 0
 
 
 def calcul_bonus_reine_en_vie(jeu, couleur_joueur):
@@ -708,7 +706,7 @@ def calcul_bonus_reine_en_vie(jeu, couleur_joueur):
         piece=jeu[i][j]
         if piece[1:]=='R':
             return 5
-    return -5
+    return 0
 
 
 def calcul_protection_reine(jeu, couleur_joueur):
@@ -729,8 +727,7 @@ def calcul_protection_reine(jeu, couleur_joueur):
 
     if score_protection>0:
         return score_protection
-    else:
-        return -3
+    return 0
 
 
 def calcul_attaque_reine(jeu, couleur_joueur):
@@ -775,8 +772,15 @@ def calcul_reine_en_danger(jeu, couleur_joueur):
                         malus_attaque-=5
     if malus_attaque<0:
         return malus_attaque
-    else:
-        return 5
+    return 0
+
+
+def calcul_bonus_victoire(jeu, mode_jeu, couleur_joueur, sans_prise):
+    if verifierFinPartie(mode_jeu,jeu,sans_prise):
+        victoire, _=determiner_victoire(jeu,mode_jeu)
+        if victoire[0]==couleur_joueur:
+            return 10
+    return 0
 
 
 ############## PHASE DE PLACEMENT ##############
@@ -788,7 +792,7 @@ def evaluer_placement(jeu, mode_jeu, couleur_joueur):
         pond_attaque = 1.0
         pond_soutien = 0.8
         pond_mobilite = 0.7
-        pond_diversite = 0.6
+        pond_diversite = 1.2
         pond_penalite_proximite = 0.4
 
     elif mode_jeu == 2:
@@ -798,7 +802,7 @@ def evaluer_placement(jeu, mode_jeu, couleur_joueur):
         pond_attaque = 0.6
         pond_soutien = 1.4
         pond_mobilite = 0.6
-        pond_diversite = 0.7
+        pond_diversite = 1.2
         pond_penalite_proximite = 0.9
 
     else:
@@ -958,7 +962,7 @@ def valMinPlacement(jeu, mode_jeu, couleur_humain, couleur_ia, pieces_humain, pi
 
 
 def lancer_tour_placement_ia(jeu, mode_jeu, couleur_ia, couleur_humain, pieces_ia, pieces_humain):
-    best_score, best_pos, best_piece = valMaxPlacement(jeu, mode_jeu,couleur_ia,couleur_humain, pieces_ia, pieces_humain, -math.inf, +math.inf, profondeur=2)
+    best_score, best_pos, best_piece = valMaxPlacement(jeu, mode_jeu,couleur_ia,couleur_humain, pieces_ia, pieces_humain, -math.inf, +math.inf, profondeur=3)
     if best_pos == '-f' or best_piece == '-f':
         return
     jeu = placer_piece_placement(best_piece, best_pos, jeu)
@@ -1067,44 +1071,44 @@ def lancer_tour_jeu_humain(jeu, mode_jeu, ma_couleur):
     return jeu, prise
 
 
-def evaluer_jeu(jeu, mode_jeu, couleur_joueur):
+def evaluer_jeu(jeu, mode_jeu, sans_prise, couleur_joueur, couleur_adv):
     if mode_jeu == 1:
         pond_score = 2.0
-        pond_malus = 1.2
-        pond_position = 1.0
-        pond_attaque = 1.0
-        pond_soutien = 0.8
-        pond_mobilite = 0.7
-        pond_diversite = 0.6
+        pond_malus = 1.5
+        pond_position = 0.5
+        pond_attaque = 1.5
+        pond_mobilite = 0.2
+        pond_soutien = 0.5
 
     elif mode_jeu == 2:
+
         pond_score = 2.0
-        pond_malus = 1.6
-        pond_position = 0.4
-        pond_attaque = 0.6
-        pond_soutien = 1.4
-        pond_mobilite = 0.6
-        pond_diversite = 0.7
+        pond_malus = 1.2
+        pond_position = 0.5
+        pond_attaque = 1.5
+        pond_mobilite = 0.2
+        pond_soutien = 0.5
 
     else:
         pond_score = 1.5
         pond_malus = 1.8
         pond_position = 0.3
         pond_attaque = 0.5
-        pond_soutien = 1.6
-        pond_mobilite = 0.7
-        pond_diversite = 0.8
+        pond_mobilite = 0.2
+        pond_soutien = 0.5
 
     if couleur_joueur == 'B':
-        couleur_adv = 'N'
         score_joueur, score_adv = calcul_score_plateau(jeu)
         malus_joueur, malus_adv = calcul_malus_pieces_posees(jeu)
-        bonus_position_joueur, bonus_position_adv = calcul_bonus_position(jeu)
+        score_position_joueur, score_position_adv = calcul_bonus_position(jeu)
     else:
-        couleur_adv = 'B'
         score_adv, score_joueur = calcul_score_plateau(jeu)
         malus_adv, malus_joueur = calcul_malus_pieces_posees(jeu)
-        bonus_position_adv, bonus_position_joueur = calcul_bonus_position(jeu)
+        score_position_adv, score_position_joueur = calcul_bonus_position(jeu)
+
+    pond_victoire = 10
+    bonus_victoire_joueur=calcul_bonus_victoire(jeu, mode_jeu, couleur_joueur, sans_prise)*pond_victoire
+    bonus_victoire_adv=calcul_bonus_victoire(jeu, mode_jeu, couleur_adv, sans_prise)*pond_victoire
 
     bonus_agressif_joueur = bonus_attaque(jeu, couleur_joueur)
     bonus_agressif_adv = bonus_attaque(jeu, couleur_adv)
@@ -1115,8 +1119,6 @@ def evaluer_jeu(jeu, mode_jeu, couleur_joueur):
     bonus_mobilite_joueur = score_mobilite(jeu, couleur_joueur)
     bonus_mobilite_adv = score_mobilite(jeu, couleur_adv)
 
-    score_div_joueur = score_diversite_controle(jeu, couleur_joueur)
-    score_div_adv = score_diversite_controle(jeu, couleur_adv)
 
     bonus_ecart_de_score = score_joueur - score_adv
 
@@ -1126,23 +1128,20 @@ def evaluer_jeu(jeu, mode_jeu, couleur_joueur):
     malus_joueur *= pond_malus
     malus_adv *= pond_malus
 
-    bonus_position_joueur *= pond_position
-    bonus_position_adv *= pond_position
+    score_position_joueur *= pond_position
+    score_position_adv *= pond_position
 
     bonus_agressif_joueur *= pond_attaque
     bonus_agressif_adv *= pond_attaque
 
-    bonus_soutien_joueur *= pond_soutien
-    bonus_soutien_adv *= pond_soutien
-
     bonus_mobilite_joueur *= pond_mobilite
     bonus_mobilite_adv *= pond_mobilite
 
-    score_div_joueur *= pond_diversite
-    score_div_adv *= pond_diversite
+    bonus_soutien_joueur *= pond_soutien
+    bonus_soutien_adv *= pond_soutien
 
-    eval_joueur = score_joueur - malus_joueur + bonus_position_joueur + bonus_agressif_joueur + bonus_soutien_joueur + bonus_mobilite_joueur + score_div_joueur
-    eval_adv = score_adv - malus_adv + bonus_position_adv + bonus_agressif_adv + bonus_soutien_adv + bonus_mobilite_adv + score_div_adv
+    eval_joueur = score_joueur - malus_joueur + score_position_joueur + bonus_agressif_joueur + bonus_mobilite_joueur + bonus_victoire_joueur + bonus_soutien_joueur
+    eval_adv = score_adv - malus_adv + score_position_adv + bonus_agressif_adv + bonus_mobilite_adv + bonus_victoire_adv + bonus_soutien_adv
 
     if mode_jeu==1 or mode_jeu==2 :
         pond_ecart_de_score = 2
@@ -1157,9 +1156,9 @@ def evaluer_jeu(jeu, mode_jeu, couleur_joueur):
 
         if mode_jeu==1:
             pond_reine_en_vie=1.5
-            pond_protection_reine=1.5
-            pond_attaque_reine=1.5
-            pond_reine_en_danger=3
+            pond_protection_reine=1.2
+            pond_attaque_reine=1.0
+            pond_reine_en_danger=2
 
             bonus_reine_en_vie_joueur=calcul_bonus_reine_en_vie(jeu, couleur_joueur)*pond_reine_en_vie
             bonus_reine_en_vie_adv = calcul_bonus_reine_en_vie(jeu, couleur_adv)*pond_reine_en_vie
@@ -1174,12 +1173,9 @@ def evaluer_jeu(jeu, mode_jeu, couleur_joueur):
             eval_adv+=bonus_reine_en_vie_adv+score_protection_rein_adv+score_attaque_reine_adv-malus_reine_en_danger_adv
 
     elif mode_jeu == 3:
-        pond_proximite_roi = 1.8
         pond_mat = 3
         pond_echec = 2
         pond_pat = 1.5
-        score_allies_pour_roi_joueur = calcul_roi_protege(jeu, couleur_joueur) * pond_proximite_roi
-        score_allies_pour_roi_adv = calcul_roi_protege(jeu, couleur_adv) * pond_proximite_roi
         score_mat_joueur = calcul_mat(jeu, couleur_adv)*pond_mat
         score_mat_adv = calcul_mat(jeu, couleur_joueur)*pond_mat
         score_echec_joueur = calcul_echec_au_roi(jeu, couleur_adv)*pond_echec
@@ -1187,21 +1183,19 @@ def evaluer_jeu(jeu, mode_jeu, couleur_joueur):
         score_pat_joueur=calcul_pat(jeu, couleur_adv)*pond_pat
         score_pat_adv=calcul_pat(jeu,couleur_joueur)*pond_pat
 
-
-
-        eval_joueur += score_allies_pour_roi_joueur+score_mat_joueur+score_echec_joueur+score_pat_joueur
-        eval_adv += score_allies_pour_roi_adv+score_mat_adv+score_echec_adv+score_pat_adv
+        eval_joueur +=score_mat_joueur+score_echec_joueur+score_pat_joueur
+        eval_adv +=score_mat_adv+score_echec_adv+score_pat_adv
 
     return eval_joueur - eval_adv
 
 
-def valMaxJeu(jeu, mode_jeu, sans_prise, couleur_ia, couleur_humain, alpha, beta, profondeur):
+def valMaxJeu(jeu, mode_jeu, sans_prise, couleur_joueur, couleur_adv, alpha, beta, profondeur):
     """
         Fonction recursive appelée par Machine
     """
     if (profondeur==0) or (verifierFinPartie(mode_jeu,jeu,sans_prise)):
         # print("pieces_ia=", pieces_ia) # DEBUG
-        return evaluer_jeu(jeu, mode_jeu, couleur_ia), '-f', '-f'
+        return evaluer_jeu(jeu, mode_jeu,sans_prise, couleur_joueur, couleur_adv), '-f', '-f'
     """
         Algorithme :: PVH
         Hypothèse : score en deçà du minimum
@@ -1211,7 +1205,7 @@ def valMaxJeu(jeu, mode_jeu, sans_prise, couleur_ia, couleur_humain, alpha, beta
     scoreMax = -math.inf
     coupMax = -math.inf
     pieceMax='.'
-    allies=positions_pieces(jeu,couleur_ia)
+    allies=positions_pieces(jeu,couleur_joueur)
     for pos in allies:
         ligne_piece=pos[0]
         colonne_piece=pos[1]
@@ -1219,13 +1213,15 @@ def valMaxJeu(jeu, mode_jeu, sans_prise, couleur_ia, couleur_humain, alpha, beta
         lesCoups=deplacements_possibles(jeu, piece, ligne_piece, colonne_piece)
         for coup in lesCoups:
             nouveauJeu, prise=jouer_coup(jeu, piece, coup)
-            if (mode_jeu!=3) or (not roi_en_echec(nouveauJeu, couleur_ia)): # Si on est pas en mode 3 OU qu'on n'a pas mis notre roi en echec, alors on continue
+            sans_prise_bis=sans_prise
+            if (mode_jeu!=3) or (not roi_en_echec(nouveauJeu, couleur_joueur)): # Si on est pas en mode 3 OU qu'on n'a pas mis notre roi en echec, alors on continue
                 if prise:
-                    sans_prise=0
+                    sans_prise_bis=0
                 else:
-                    sans_prise+=1
+                    sans_prise_bis+=1
 
-                score, _, _ = valMinJeu(nouveauJeu, mode_jeu, sans_prise, couleur_ia, couleur_humain, alpha, beta, profondeur-1)
+                score, _, _ = valMinJeu(nouveauJeu, mode_jeu, sans_prise_bis, couleur_adv, couleur_joueur, alpha, beta, profondeur-1)
+
 
                 if score > scoreMax:
                     scoreMax = score
@@ -1240,13 +1236,13 @@ def valMaxJeu(jeu, mode_jeu, sans_prise, couleur_ia, couleur_humain, alpha, beta
     return scoreMax, coupMax, pieceMax
 
 
-def valMinJeu(jeu, mode_jeu, sans_prise, couleur_ia, couleur_humain, alpha, beta, profondeur):
+def valMinJeu(jeu, mode_jeu, sans_prise, couleur_joueur, couleur_adv, alpha, beta, profondeur):
     """
         Fonction recursive appelée par Machine
     """
     if (profondeur==0) or (verifierFinPartie(mode_jeu,jeu,sans_prise)):
         # print("pieces_ia=", pieces_ia) # DEBUG
-        return evaluer_jeu(jeu, mode_jeu, couleur_humain), '-f', '-f'
+        return evaluer_jeu(jeu, mode_jeu,sans_prise, couleur_adv, couleur_joueur), '-f', '-f'
     """
         Algorithme :: PVH
         Hypothèse : score en deçà du minimum
@@ -1256,7 +1252,7 @@ def valMinJeu(jeu, mode_jeu, sans_prise, couleur_ia, couleur_humain, alpha, beta
     scoreMin = +math.inf
     coupMin = +math.inf
     pieceMin='.'
-    allies=positions_pieces(jeu,couleur_humain)
+    allies=positions_pieces(jeu,couleur_adv)
     for pos in allies:
         ligne_piece = pos[0]
         colonne_piece = pos[1]
@@ -1264,13 +1260,14 @@ def valMinJeu(jeu, mode_jeu, sans_prise, couleur_ia, couleur_humain, alpha, beta
         lesCoups=deplacements_possibles(jeu, piece, ligne_piece, colonne_piece)
         for coup in lesCoups:
             nouveauJeu, prise=jouer_coup(jeu, piece, coup)
-            if (mode_jeu!=3) or (not roi_en_echec(nouveauJeu, couleur_humain)): # Si on est pas en mode 3 OU qu'on n'a pas mis notre roi en echec, alors on continue
+            sans_prise_bis=sans_prise
+            if (mode_jeu!=3) or (not roi_en_echec(nouveauJeu, couleur_adv)): # Si on est pas en mode 3 OU qu'on n'a pas mis notre roi en echec, alors on continue
                 if prise:
-                    sans_prise=0
+                    sans_prise_bis=0
                 else:
-                    sans_prise+=1
+                    sans_prise_bis+=1
 
-                score, _, _ = valMaxJeu(nouveauJeu, mode_jeu, sans_prise, couleur_ia, couleur_humain, alpha, beta, profondeur-1)
+                score, _, _ = valMaxJeu(nouveauJeu, mode_jeu, sans_prise_bis, couleur_joueur, couleur_adv, alpha, beta, profondeur-1)
 
                 if score < scoreMin:
                     scoreMin = score
@@ -1286,7 +1283,7 @@ def valMinJeu(jeu, mode_jeu, sans_prise, couleur_ia, couleur_humain, alpha, beta
 
 
 def lancer_tour_jeu_ia(jeu, mode_jeu, sans_prise, couleur_ia, couleur_adv):
-    best_score, best_pos, best_piece = valMaxJeu(jeu, mode_jeu, sans_prise, couleur_ia, couleur_adv, -math.inf, +math.inf, profondeur=2)
+    best_score, best_pos, best_piece = valMaxJeu(jeu, mode_jeu, sans_prise, couleur_ia, couleur_adv, -math.inf, +math.inf, profondeur=3)
     if best_pos == '-f' or best_piece == '-f':
         return
 
