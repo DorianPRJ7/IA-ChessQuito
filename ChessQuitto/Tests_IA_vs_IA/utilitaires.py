@@ -665,6 +665,126 @@ def penalite_proximite(jeu, couleur):
 
     return penalite
 
+def calcul_mat(jeu, couleur_adv):
+    if est_en_mat(jeu,couleur_adv):
+        return 10
+    return 0
+
+
+def calcul_echec_au_roi(jeu, couleur_adv):
+    nbEchecAuRoi=0
+    for i in range(4):
+        for j in range(4):
+            piece=jeu[i][j]
+            if piece[0]!=couleur_adv:
+                ligne_roi, colonne_roi=coord_roi(jeu,piece)
+                if peutAttaquer(jeu,piece[1:],i,j,ligne_roi, colonne_roi):
+                    nbEchecAuRoi+=1
+    return nbEchecAuRoi*2
+
+
+def calcul_pat(jeu, couleur_adv):
+    if est_en_mat(jeu,couleur_adv):
+        return 10
+    return 0
+
+
+
+def calcul_grosses_pieces_en_vie(jeu, couleur_joueur):
+    allies = positions_pieces(jeu, couleur_joueur)
+    bonus=0
+    for allie in allies:
+        i = allie[0]
+        j = allie[1]
+        piece = jeu[i][j]
+        cout=cout_piece(piece[1:])
+        if cout>=3:
+            bonus+=cout
+
+    if bonus!=0:
+        return bonus
+    else:
+        return -3
+
+
+def calcul_bonus_reine_en_vie(jeu, couleur_joueur):
+    allies=positions_pieces(jeu,couleur_joueur)
+    for allie in allies:
+        i=allie[0]
+        j=allie[1]
+        piece=jeu[i][j]
+        if piece[1:]=='R':
+            return 5
+    return -5
+
+
+def calcul_protection_reine(jeu, couleur_joueur):
+    allies = positions_pieces(jeu, couleur_joueur)
+    score_protection=0
+    for allie in allies:
+        i1=allie[0]
+        j1=allie[1]
+        piece = jeu[i1][j1]
+        if piece[1:] == 'R':
+            for autre_allie in allies:
+                if allie != autre_allie:
+                    i2=autre_allie[0]
+                    j2=autre_allie[1]
+                    protecteur=jeu[i2][j2]
+                    if peutAttaquer(jeu, protecteur[1:], i2, j2, i1, j1):
+                        score_protection+=1
+
+    if score_protection>0:
+        return score_protection
+    else:
+        return -3
+
+
+def calcul_attaque_reine(jeu, couleur_joueur):
+    if couleur_joueur=='B':
+        couleur_adv='N'
+    else:
+        couleur_adv='B'
+    ennemis = positions_pieces(jeu, couleur_adv)
+
+    for i in range(4):
+        for j in range(4):
+            piece = jeu[i][j]
+            if piece[0] == couleur_joueur and piece[1:] == 'R':
+                bonus = 0
+                for pos in ennemis:
+                    ligne=pos[0]
+                    colonne=pos[1]
+                    piece_adv = jeu[ligne][colonne]
+                    if peutAttaquer(jeu, 'R', i, j, ligne, colonne):
+                        bonus += cout_piece(piece_adv[1:])
+                return bonus
+    return 0
+
+
+def calcul_reine_en_danger(jeu, couleur_joueur):
+    if couleur_joueur == 'B':
+        couleur_adv = 'N'
+    else:
+        couleur_adv = 'B'
+    ennemis = positions_pieces(jeu, couleur_adv)
+    malus_attaque=0
+
+    for i in range(4):
+        for j in range(4):
+            piece = jeu[i][j]
+            if piece[0] == couleur_joueur and piece[1:] == 'R':
+                for pos in ennemis:
+                    ligne=pos[0]
+                    colonne=pos[1]
+                    piece_ennemie = jeu[ligne][colonne]
+                    if peutAttaquer(jeu, piece_ennemie[1:], ligne, colonne, i, j):
+                        malus_attaque-=5
+    if malus_attaque<0:
+        return malus_attaque
+    else:
+        return 5
+
 
 Colonnes = ['A', 'B', 'C', 'D']
 Lignes = ['1', '2', '3', '4']
