@@ -383,9 +383,8 @@ def jouer_coup(jeu, piece, pos):
     nouveauJeu=copier_plateau(jeu)
     nouveauJeu[ligne][colonne]=piece
     nouveauJeu[ancienne_ligne][ancienne_colonne]='.'
-    jeu=nouveauJeu
 
-    return jeu, prise
+    return nouveauJeu, prise
 
 
 def verifierFinPartie(mode_jeu, jeu, sans_prise):
@@ -961,7 +960,7 @@ def valMinPlacement(jeu, mode_jeu, couleur_humain, couleur_ia, pieces_humain, pi
     lesCoups = coups_possibles_placements(jeu)
     if (profondeur == 0) or (len(pieces_humain) == 0) or (len(lesCoups) == 0):
         # print("pieces_humain=",pieces_humain) # DEBUG
-        return evaluer_placement(jeu, mode_jeu, couleur_humain), '-f', '-f'
+        return evaluer_placement(jeu, mode_jeu, couleur_ia), '-f', '-f'
 
     """
       Algorithme :: PVH
@@ -1254,7 +1253,13 @@ def valMaxJeu(jeu, mode_jeu, sans_prise, couleur_ia, couleur_humain, alpha, beta
                     sans_prise_bis+=1
 
                 score, _, _ = valMinJeu(nouveauJeu, mode_jeu, sans_prise_bis, couleur_humain, couleur_ia, alpha, beta, profondeur - 1)
-
+                #print("---VAL MAX---")
+                #print(f"{piece} → {coup} → score = {score}")
+                #print("Plateau simulé :")
+                #afficher(nouveauJeu)
+                #print("Fin de partie détectée :", verifierFinPartie(mode_jeu, nouveauJeu, sans_prise_bis))
+                #print("Bonus victoire IA :", calcul_bonus_victoire(nouveauJeu, mode_jeu, couleur_ia, sans_prise_bis))
+                #print("Évaluation finale :", evaluer_jeu(nouveauJeu, mode_jeu, sans_prise_bis, couleur_ia, couleur_humain))
 
                 if score > scoreMax:
                     scoreMax = score
@@ -1275,7 +1280,7 @@ def valMinJeu(jeu, mode_jeu, sans_prise, couleur_humain, couleur_ia, alpha, beta
     """
     if (profondeur==0) or (verifierFinPartie(mode_jeu,jeu,sans_prise)):
         # print("pieces_ia=", pieces_ia) # DEBUG
-        return evaluer_jeu(jeu, mode_jeu, sans_prise, couleur_humain, couleur_ia), '-f', '-f'
+        return evaluer_jeu(jeu, mode_jeu, sans_prise, couleur_ia, couleur_humain), '-f', '-f'
     """
         Algorithme :: PVH
         Hypothèse : score en deçà du minimum
@@ -1302,6 +1307,13 @@ def valMinJeu(jeu, mode_jeu, sans_prise, couleur_humain, couleur_ia, alpha, beta
 
                 score, _, _ = valMaxJeu(nouveauJeu, mode_jeu, sans_prise_bis, couleur_ia, couleur_humain, alpha, beta, profondeur - 1)
 
+                #print("---VAL MIN---")
+                #print(f"{piece} → {coup} → score = {score}")
+                #print("Plateau simulé :")
+                #afficher(nouveauJeu)
+                #print("Fin de partie détectée :", verifierFinPartie(mode_jeu, nouveauJeu, sans_prise_bis))
+                #print("Bonus victoire IA :", calcul_bonus_victoire(nouveauJeu, mode_jeu, couleur_humain, sans_prise_bis))
+                #print("Évaluation finale :", evaluer_jeu(nouveauJeu, mode_jeu, sans_prise_bis,couleur_humain, couleur_ia))
                 if score < scoreMin:
                     scoreMin = score
                     coupMin = coup
