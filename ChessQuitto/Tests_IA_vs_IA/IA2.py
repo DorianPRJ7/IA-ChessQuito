@@ -267,34 +267,34 @@ def evaluer_jeu2(jeu, mode_jeu, couleur_joueur):
     eval_joueur = score_joueur - malus_joueur + bonus_position_joueur + bonus_agressif_joueur + bonus_soutien_joueur + bonus_mobilite_joueur + score_div_joueur
     eval_adv = score_adv - malus_adv + bonus_position_adv + bonus_agressif_adv + bonus_soutien_adv + bonus_mobilite_adv + score_div_adv
 
-    if mode_jeu==1 or mode_jeu==2 :
-        pond_ecart_de_score = 2.5
+    if mode_jeu == 1 or mode_jeu == 2:
+        pond_ecart_de_score = 2
         pond_grosses_pieces_en_vie = 2
 
-        bonus_grosses_pieces_en_vie_joueur = calcul_grosses_pieces_en_vie(jeu, couleur_joueur) * pond_grosses_pieces_en_vie
+        bonus_grosses_pieces_en_vie_joueur = calcul_grosses_pieces_en_vie(jeu,
+                                                                          couleur_joueur) * pond_grosses_pieces_en_vie
         bonus_grosses_pieces_en_vie_adv = calcul_grosses_pieces_en_vie(jeu, couleur_adv) * pond_grosses_pieces_en_vie
 
-        eval_joueur += bonus_ecart_de_score*pond_ecart_de_score+bonus_grosses_pieces_en_vie_joueur
-        eval_adv+=bonus_grosses_pieces_en_vie_adv
+        eval_joueur += bonus_ecart_de_score * pond_ecart_de_score + bonus_grosses_pieces_en_vie_joueur
+        eval_adv += bonus_grosses_pieces_en_vie_adv
 
+        if mode_jeu == 1:
+            pond_reine_en_vie = 1.5
+            pond_protection_reine = 1.5
+            pond_attaque_reine = 1.5
+            pond_reine_en_danger = 3
 
-        if mode_jeu==1:
-            pond_reine_en_vie=3
-            pond_protection_reine=3
-            pond_attaque_reine=3
-            pond_reine_en_danger=4
+            bonus_reine_en_vie_joueur = calcul_bonus_reine_en_vie(jeu, couleur_joueur) * pond_reine_en_vie
+            bonus_reine_en_vie_adv = calcul_bonus_reine_en_vie(jeu, couleur_adv) * pond_reine_en_vie
+            score_protection_reine_joueur = calcul_protection_reine(jeu, couleur_joueur) * pond_protection_reine
+            score_protection_rein_adv = calcul_protection_reine(jeu, couleur_adv) * pond_protection_reine
+            score_attaque_reine_joueur = calcul_attaque_reine(jeu, couleur_joueur) * pond_attaque_reine
+            score_attaque_reine_adv = calcul_attaque_reine(jeu, couleur_adv) * pond_attaque_reine
+            malus_reine_en_danger_joueur = calcul_reine_en_danger(jeu, couleur_joueur) * pond_reine_en_danger
+            malus_reine_en_danger_adv = calcul_reine_en_danger(jeu, couleur_adv) * pond_reine_en_danger
 
-            bonus_reine_en_vie_joueur=calcul_bonus_reine_en_vie(jeu, couleur_joueur)*pond_reine_en_vie
-            bonus_reine_en_vie_adv = calcul_bonus_reine_en_vie(jeu, couleur_adv)*pond_reine_en_vie
-            score_protection_reine_joueur=calcul_protection_reine(jeu,couleur_joueur)*pond_protection_reine
-            score_protection_rein_adv=calcul_protection_reine(jeu,couleur_adv)*pond_protection_reine
-            score_attaque_reine_joueur=calcul_attaque_reine(jeu,couleur_joueur)*pond_attaque_reine
-            score_attaque_reine_adv=calcul_attaque_reine(jeu,couleur_adv)*pond_attaque_reine
-            malus_reine_en_danger_joueur=calcul_reine_en_danger(jeu,couleur_joueur)*pond_reine_en_danger
-            malus_reine_en_danger_adv=calcul_reine_en_danger(jeu,couleur_adv)*pond_reine_en_danger
-
-            eval_joueur+=bonus_reine_en_vie_joueur+score_protection_reine_joueur+score_attaque_reine_joueur-malus_reine_en_danger_joueur
-            eval_adv+=bonus_reine_en_vie_adv+score_protection_rein_adv+score_attaque_reine_adv-malus_reine_en_danger_adv
+            eval_joueur += bonus_reine_en_vie_joueur + score_protection_reine_joueur + score_attaque_reine_joueur - malus_reine_en_danger_joueur
+            eval_adv += bonus_reine_en_vie_adv + score_protection_rein_adv + score_attaque_reine_adv - malus_reine_en_danger_adv
 
     elif mode_jeu == 3:
         pond_proximite_roi = 1.8
@@ -303,17 +303,15 @@ def evaluer_jeu2(jeu, mode_jeu, couleur_joueur):
         pond_pat = 1.5
         score_allies_pour_roi_joueur = calcul_roi_protege(jeu, couleur_joueur) * pond_proximite_roi
         score_allies_pour_roi_adv = calcul_roi_protege(jeu, couleur_adv) * pond_proximite_roi
-        score_mat_joueur = calcul_mat(jeu, couleur_adv)*pond_mat
-        score_mat_adv = calcul_mat(jeu, couleur_joueur)*pond_mat
-        score_echec_joueur = calcul_echec_au_roi(jeu, couleur_adv)*pond_echec
-        score_echec_adv = calcul_echec_au_roi(jeu, couleur_joueur)*pond_echec
-        score_pat_joueur=calcul_pat(jeu, couleur_adv)*pond_pat
-        score_pat_adv=calcul_pat(jeu,couleur_joueur)*pond_pat
+        score_mat_joueur = calcul_mat(jeu, couleur_adv) * pond_mat
+        score_mat_adv = calcul_mat(jeu, couleur_joueur) * pond_mat
+        score_echec_joueur = calcul_echec_au_roi(jeu, couleur_adv) * pond_echec
+        score_echec_adv = calcul_echec_au_roi(jeu, couleur_joueur) * pond_echec
+        score_pat_joueur = calcul_pat(jeu, couleur_adv) * pond_pat
+        score_pat_adv = calcul_pat(jeu, couleur_joueur) * pond_pat
 
-
-
-        eval_joueur += score_allies_pour_roi_joueur+score_mat_joueur+score_echec_joueur+score_pat_joueur
-        eval_adv += score_allies_pour_roi_adv+score_mat_adv+score_echec_adv+score_pat_adv
+        eval_joueur += score_allies_pour_roi_joueur + score_mat_joueur + score_echec_joueur + score_pat_joueur
+        eval_adv += score_allies_pour_roi_adv + score_mat_adv + score_echec_adv + score_pat_adv
 
     return eval_joueur - eval_adv
 

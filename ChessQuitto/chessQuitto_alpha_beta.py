@@ -1145,7 +1145,7 @@ def evaluer_jeu(jeu, mode_jeu, couleur_joueur):
     eval_adv = score_adv - malus_adv + bonus_position_adv + bonus_agressif_adv + bonus_soutien_adv + bonus_mobilite_adv + score_div_adv
 
     if mode_jeu==1 or mode_jeu==2 :
-        pond_ecart_de_score = 2.5
+        pond_ecart_de_score = 2
         pond_grosses_pieces_en_vie = 2
 
         bonus_grosses_pieces_en_vie_joueur = calcul_grosses_pieces_en_vie(jeu, couleur_joueur) * pond_grosses_pieces_en_vie
@@ -1156,10 +1156,10 @@ def evaluer_jeu(jeu, mode_jeu, couleur_joueur):
 
 
         if mode_jeu==1:
-            pond_reine_en_vie=3
-            pond_protection_reine=3
-            pond_attaque_reine=3
-            pond_reine_en_danger=4
+            pond_reine_en_vie=1.5
+            pond_protection_reine=1.5
+            pond_attaque_reine=1.5
+            pond_reine_en_danger=3
 
             bonus_reine_en_vie_joueur=calcul_bonus_reine_en_vie(jeu, couleur_joueur)*pond_reine_en_vie
             bonus_reine_en_vie_adv = calcul_bonus_reine_en_vie(jeu, couleur_adv)*pond_reine_en_vie
