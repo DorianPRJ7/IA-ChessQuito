@@ -373,8 +373,10 @@ def verifierFinPartie(mode_jeu, jeu, sans_prise):
 
 def determiner_victoire(jeu, mode_jeu):
     if mode_jeu==3 and (echec_et_mat(jeu) or est_pat(jeu)):
-        if est_en_pat(jeu,'B') or est_en_pat(jeu,'N'): # Si y'a pat, y'a nul (reverifier la regle si pat Noirs, Blancs gagnant ou nul ?)
-            return 'AUCUN', 'PAT'
+        if est_en_pat(jeu,'B'):
+            return 'NOIRS', 'PAT'
+        elif est_en_pat(jeu,'N'):
+            return 'BLANCS', 'PAT'
         else:
             blancs_sont_mat=est_en_mat(jeu,'B')
             noirs_sont_mat=est_en_mat(jeu,'N')
@@ -923,7 +925,7 @@ def lancer_tour_jeu_humain(jeu, mode_jeu, ma_couleur):
             pos=message[1]
             allies=positions_pieces(jeu,ma_couleur)
             coord_lig_piece, coord_col_piece = coord_piece(jeu, piece)
-            coord_lig_dest, coord_col_dest = traduire_pos_en_indice(pos)
+            # coord_lig_dest, coord_col_dest = traduire_pos_en_indice(pos)
             piece=jeu[coord_lig_piece][coord_col_piece]
             lesCoups=deplacements_possibles(jeu,piece,coord_lig_piece,coord_col_piece)
             if (coord_lig_piece, coord_col_piece) in allies:
@@ -946,19 +948,180 @@ def lancer_tour_jeu_humain(jeu, mode_jeu, ma_couleur):
     return jeu, prise
 
 
+def calcul_mat(jeu, couleur_adv):
+    if est_en_mat(jeu,couleur_adv):
+        return 10
+    return 0
+
+
+def calcul_echec_au_roi(jeu, couleur_adv):
+    nbEchecAuRoi=0
+    for i in range(4):
+        for j in range(4):
+            piece=jeu[i][j]
+            if piece[0]!=couleur_adv:
+                ligne_roi, colonne_roi=coord_roi(jeu,piece)
+                if peutAttaquer(jeu,piece[1:],i,j,ligne_roi, colonne_roi):
+                    nbEchecAuRoi+=1
+    return nbEchecAuRoi*2
+
+
+def calcul_pat(jeu, couleur_adv):
+    if est_en_mat(jeu,couleur_adv):
+        return 10
+    return 0
+
+
+
+def calcul_grosses_pieces_en_vie(jeu, couleur_joueur):
+    allies = positions_pieces(jeu, couleur_joueur)
+    bonus=0
+    for allie in allies:
+        i = allie[0]
+        j = allie[1]
+        piece = jeu[i][j]
+        cout=cout_piece(piece[1:])
+        if cout>=3:
+            bonus+=cout
+
+    if bonus!=0:
+        return bonus
+    else:
+        return -3
+
+
+def calcul_bonus_reine_en_vie(jeu, couleur_joueur):
+    allies=positions_pieces(jeu,couleur_joueur)
+    for allie in allies:
+        i=allie[0]
+        j=allie[1]
+        piece=jeu[i][j]
+        if piece[1:]=='R':
+            return 5
+    return -5
+
+
+def calcul_protection_reine(jeu, couleur_joueur):
+    allies = positions_pieces(jeu, couleur_joueur)
+    score_protection=0
+    for allie in allies:
+        i1=allie[0]
+        j1=allie[1]
+        piece = jeu[i1][j1]
+        if piece[1:] == 'R':
+            for autre_allie in allies:
+                if allie != autre_allie:
+                    i2=autre_allie[0]
+                    j2=autre_allie[1]
+                    protecteur=jeu[i2][j2]
+                    if peutAttaquer(jeu, protecteur[1:], i2, j2, i1, j1):
+                        score_protection+=1
+
+    if score_protection>0:
+        return score_protection
+    else:
+        return -3
+
+
+def calcul_attaque_reine(jeu, couleur_joueur):
+    if couleur_joueur=='B':
+        couleur_adv='N'
+    else:
+        couleur_adv='B'
+    ennemis = positions_pieces(jeu, couleur_adv)
+
+    for i in range(4):
+        for j in range(4):
+            piece = jeu[i][j]
+            if piece[0] == couleur_joueur and piece[1:] == 'R':
+                bonus = 0
+                for pos in ennemis:
+                    ligne=pos[0]
+                    colonne=pos[1]
+                    piece_adv = jeu[ligne][colonne]
+                    if peutAttaquer(jeu, 'R', i, j, ligne, colonne):
+                        bonus += cout_piece(piece_adv[1:])
+                return bonus
+    return 0
+
+
+def calcul_reine_en_danger(jeu, couleur_joueur):
+    if couleur_joueur == 'B':
+        couleur_adv = 'N'
+    else:
+        couleur_adv = 'B'
+    ennemis = positions_pieces(jeu, couleur_adv)
+    malus_attaque=0
+
+    for i in range(4):
+        for j in range(4):
+            piece = jeu[i][j]
+            if piece[0] == couleur_joueur and piece[1:] == 'R':
+                for pos in ennemis:
+                    ligne=pos[0]
+                    colonne=pos[1]
+                    piece_ennemie = jeu[ligne][colonne]
+                    if peutAttaquer(jeu, piece_ennemie[1:], ligne, colonne, i, j):
+                        malus_attaque-=5
+    if malus_attaque<0:
+        return malus_attaque
+    else:
+        return 5
+
+
+
 def evaluer_jeu(jeu, mode_jeu, couleur_joueur):
-    pond_score = 1.0
-    pond_malus = 0.7
-    pond_position = 0.6
+    if mode_jeu == 1:
+        pond_score = 2.0
+        pond_malus = 1.2
+        pond_position = 1.0
+        pond_attaque = 1.0
+        pond_soutien = 0.8
+        pond_mobilite = 0.7
+        pond_diversite = 0.6
+
+    elif mode_jeu == 2:
+        pond_score = 2.0
+        pond_malus = 1.6
+        pond_position = 0.4
+        pond_attaque = 0.6
+        pond_soutien = 1.4
+        pond_mobilite = 0.6
+        pond_diversite = 0.7
+
+    else:
+        pond_score = 1.5
+        pond_malus = 1.8
+        pond_position = 0.3
+        pond_attaque = 0.5
+        pond_soutien = 1.6
+        pond_mobilite = 0.7
+        pond_diversite = 0.8
 
     if couleur_joueur == 'B':
+        couleur_adv = 'N'
         score_joueur, score_adv = calcul_score_plateau(jeu)
         malus_joueur, malus_adv = calcul_malus_pieces_posees(jeu)
         bonus_position_joueur, bonus_position_adv = calcul_bonus_position(jeu)
     else:
+        couleur_adv = 'B'
         score_adv, score_joueur = calcul_score_plateau(jeu)
         malus_adv, malus_joueur = calcul_malus_pieces_posees(jeu)
         bonus_position_adv, bonus_position_joueur = calcul_bonus_position(jeu)
+
+    bonus_agressif_joueur = bonus_attaque(jeu, couleur_joueur)
+    bonus_agressif_adv = bonus_attaque(jeu, couleur_adv)
+
+    bonus_soutien_joueur = bonus_soutien_entre_pieces(jeu, couleur_joueur)
+    bonus_soutien_adv = bonus_soutien_entre_pieces(jeu, couleur_adv)
+
+    bonus_mobilite_joueur = score_mobilite(jeu, couleur_joueur)
+    bonus_mobilite_adv = score_mobilite(jeu, couleur_adv)
+
+    score_div_joueur = score_diversite_controle(jeu, couleur_joueur)
+    score_div_adv = score_diversite_controle(jeu, couleur_adv)
+
+    bonus_ecart_de_score = score_joueur - score_adv
 
     score_joueur *= pond_score
     score_adv *= pond_score
@@ -969,8 +1132,68 @@ def evaluer_jeu(jeu, mode_jeu, couleur_joueur):
     bonus_position_joueur *= pond_position
     bonus_position_adv *= pond_position
 
-    eval_joueur = score_joueur - malus_joueur + bonus_position_joueur
-    eval_adv = score_adv - malus_adv + bonus_position_adv
+    bonus_agressif_joueur *= pond_attaque
+    bonus_agressif_adv *= pond_attaque
+
+    bonus_soutien_joueur *= pond_soutien
+    bonus_soutien_adv *= pond_soutien
+
+    bonus_mobilite_joueur *= pond_mobilite
+    bonus_mobilite_adv *= pond_mobilite
+
+    score_div_joueur *= pond_diversite
+    score_div_adv *= pond_diversite
+
+    eval_joueur = score_joueur - malus_joueur + bonus_position_joueur + bonus_agressif_joueur + bonus_soutien_joueur + bonus_mobilite_joueur + score_div_joueur
+    eval_adv = score_adv - malus_adv + bonus_position_adv + bonus_agressif_adv + bonus_soutien_adv + bonus_mobilite_adv + score_div_adv
+
+    if mode_jeu==1 or mode_jeu==2 :
+        pond_ecart_de_score = 2.5
+        pond_grosses_pieces_en_vie = 2
+
+        bonus_grosses_pieces_en_vie_joueur = calcul_grosses_pieces_en_vie(jeu, couleur_joueur) * pond_grosses_pieces_en_vie
+        bonus_grosses_pieces_en_vie_adv = calcul_grosses_pieces_en_vie(jeu, couleur_adv) * pond_grosses_pieces_en_vie
+
+        eval_joueur += bonus_ecart_de_score*pond_ecart_de_score+bonus_grosses_pieces_en_vie_joueur
+        eval_adv+=bonus_grosses_pieces_en_vie_adv
+
+
+        if mode_jeu==1:
+            pond_reine_en_vie=3
+            pond_protection_reine=3
+            pond_attaque_reine=3
+            pond_reine_en_danger=4
+
+            bonus_reine_en_vie_joueur=calcul_bonus_reine_en_vie(jeu, couleur_joueur)*pond_reine_en_vie
+            bonus_reine_en_vie_adv = calcul_bonus_reine_en_vie(jeu, couleur_adv)*pond_reine_en_vie
+            score_protection_reine_joueur=calcul_protection_reine(jeu,couleur_joueur)*pond_protection_reine
+            score_protection_rein_adv=calcul_protection_reine(jeu,couleur_adv)*pond_protection_reine
+            score_attaque_reine_joueur=calcul_attaque_reine(jeu,couleur_joueur)*pond_attaque_reine
+            score_attaque_reine_adv=calcul_attaque_reine(jeu,couleur_adv)*pond_attaque_reine
+            malus_reine_en_danger_joueur=calcul_reine_en_danger(jeu,couleur_joueur)*pond_reine_en_danger
+            malus_reine_en_danger_adv=calcul_reine_en_danger(jeu,couleur_adv)*pond_reine_en_danger
+
+            eval_joueur+=bonus_reine_en_vie_joueur+score_protection_reine_joueur+score_attaque_reine_joueur-malus_reine_en_danger_joueur
+            eval_adv+=bonus_reine_en_vie_adv+score_protection_rein_adv+score_attaque_reine_adv-malus_reine_en_danger_adv
+
+    elif mode_jeu == 3:
+        pond_proximite_roi = 1.8
+        pond_mat = 3
+        pond_echec = 2
+        pond_pat = 1.5
+        score_allies_pour_roi_joueur = calcul_roi_protege(jeu, couleur_joueur) * pond_proximite_roi
+        score_allies_pour_roi_adv = calcul_roi_protege(jeu, couleur_adv) * pond_proximite_roi
+        score_mat_joueur = calcul_mat(jeu, couleur_adv)*pond_mat
+        score_mat_adv = calcul_mat(jeu, couleur_joueur)*pond_mat
+        score_echec_joueur = calcul_echec_au_roi(jeu, couleur_adv)*pond_echec
+        score_echec_adv = calcul_echec_au_roi(jeu, couleur_joueur)*pond_echec
+        score_pat_joueur=calcul_pat(jeu, couleur_adv)*pond_pat
+        score_pat_adv=calcul_pat(jeu,couleur_joueur)*pond_pat
+
+
+
+        eval_joueur += score_allies_pour_roi_joueur+score_mat_joueur+score_echec_joueur+score_pat_joueur
+        eval_adv += score_allies_pour_roi_adv+score_mat_adv+score_echec_adv+score_pat_adv
 
     return eval_joueur - eval_adv
 
