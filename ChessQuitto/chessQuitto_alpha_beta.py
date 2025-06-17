@@ -1123,16 +1123,16 @@ def evaluer_jeu(jeu, mode_jeu, sans_prise, couleur_joueur, couleur_adv):
 
         pond_score = 2.0
         pond_malus = 1.2
-        pond_position = 0.5
+        pond_position = 1.2
         pond_attaque = 1.5
-        pond_mobilite = 0.2
         pond_soutien = 0.5
+        pond_mobilite = 0.2
 
     else:
         pond_score = 1.5
         pond_malus = 1.8
-        pond_position = 0.3
-        pond_attaque = 0.5
+        pond_position = 0.6
+        pond_attaque = 1.0
         pond_mobilite = 0.2
         pond_soutien = 0.5
 
