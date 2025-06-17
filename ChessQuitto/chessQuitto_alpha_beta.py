@@ -958,7 +958,7 @@ def valMinPlacement(jeu, mode_jeu, couleur_humain, couleur_ia, pieces_humain, pi
 
 
 def lancer_tour_placement_ia(jeu, mode_jeu, couleur_ia, couleur_humain, pieces_ia, pieces_humain):
-    best_score, best_pos, best_piece = valMaxPlacement(jeu, mode_jeu,couleur_ia,couleur_humain, pieces_ia, pieces_humain, -math.inf, +math.inf, profondeur=3)
+    best_score, best_pos, best_piece = valMaxPlacement(jeu, mode_jeu,couleur_ia,couleur_humain, pieces_ia, pieces_humain, -math.inf, +math.inf, profondeur=2)
     if best_pos == '-f' or best_piece == '-f':
         return
     jeu = placer_piece_placement(best_piece, best_pos, jeu)
@@ -1286,7 +1286,7 @@ def valMinJeu(jeu, mode_jeu, sans_prise, couleur_ia, couleur_humain, alpha, beta
 
 
 def lancer_tour_jeu_ia(jeu, mode_jeu, sans_prise, couleur_ia, couleur_adv):
-    best_score, best_pos, best_piece = valMaxJeu(jeu, mode_jeu, sans_prise, couleur_ia, couleur_adv, -math.inf, +math.inf, profondeur=3)
+    best_score, best_pos, best_piece = valMaxJeu(jeu, mode_jeu, sans_prise, couleur_ia, couleur_adv, -math.inf, +math.inf, profondeur=2)
     if best_pos == '-f' or best_piece == '-f':
         return
 
