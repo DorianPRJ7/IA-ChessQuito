@@ -811,10 +811,12 @@ def calcul_bonus_victoire(jeu, mode_jeu, couleur_joueur, sans_prise):
     else:
         couleur_adv = 'B'
 
-    if verifierFinPartie(mode_jeu,jeu,sans_prise,couleur_adv):
+    if verifierFinPartie(mode_jeu,jeu,sans_prise,couleur_joueur) or verifierFinPartie(mode_jeu,jeu,sans_prise,couleur_adv):
         victoire, _=determiner_victoire(jeu,mode_jeu)
         if victoire[0]==couleur_joueur:
             return 10
+        elif victoire[0]==couleur_adv:
+            return -10
     return 0
 
 
