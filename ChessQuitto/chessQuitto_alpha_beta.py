@@ -384,15 +384,15 @@ def jouer_coup(jeu, piece, pos):
     return nouveauJeu, prise
 
 
-def verifierFinPartie(mode_jeu, jeu, sans_prise):
-    print("SansPrise :", sans_prise,"echec et mat :",echec_et_mat(jeu),"pat :",est_pat(jeu))
+def verifierFinPartie(mode_jeu, jeu, sans_prise, couleur_joueur_suivant):
     if mode_jeu==3: # Si on est en mode 3
-        if echec_et_mat(jeu) or est_pat(jeu): # Si on est en echec et mat ou en pat, alors fin de partie
+        if est_en_mat(jeu,couleur_joueur_suivant): # Si on est en echec et mat ou en pat, alors fin de partie
+            return True
+        if est_en_pat(jeu,couleur_joueur_suivant):
             return True
 
-    pos_pieces_blanches=positions_pieces(jeu, 'B')
-    pos_pieces_noires=positions_pieces(jeu, 'N')
-    if len(pos_pieces_blanches)==0 or len(pos_pieces_noires)==0: # Si un des deux joueurs n'a plus de pieces, alors fin de partie
+    pos_pieces_blanches=positions_pieces(jeu, couleur_joueur_suivant)
+    if len(pos_pieces_blanches)==0: # Si un des deux joueurs n'a plus de pieces, alors fin de partie
         return True
 
     if sans_prise>=5: # Si plus de 5 deplacements sans prises, alors fin de partie
@@ -806,7 +806,12 @@ def calcul_reine_en_danger(jeu, couleur_joueur):
 
 
 def calcul_bonus_victoire(jeu, mode_jeu, couleur_joueur, sans_prise):
-    if verifierFinPartie(mode_jeu,jeu,sans_prise):
+    if couleur_joueur == 'B':
+        couleur_adv = 'N'
+    else:
+        couleur_adv = 'B'
+
+    if verifierFinPartie(mode_jeu,jeu,sans_prise,couleur_adv):
         victoire, _=determiner_victoire(jeu,mode_jeu)
         if victoire[0]==couleur_joueur:
             return 10
@@ -1223,7 +1228,7 @@ def valMaxJeu(jeu, mode_jeu, sans_prise, couleur_ia, couleur_humain, alpha, beta
     """
         Fonction recursive appelée par Machine
     """
-    if (profondeur==0) or (verifierFinPartie(mode_jeu,jeu,sans_prise)):
+    if (profondeur==0) or (verifierFinPartie(mode_jeu,jeu,sans_prise, couleur_ia)):
         # print("pieces_ia=", pieces_ia) # DEBUG
         return evaluer_jeu(jeu, mode_jeu, sans_prise, couleur_ia, couleur_humain), '-f', '-f'
     """
@@ -1276,7 +1281,7 @@ def valMinJeu(jeu, mode_jeu, sans_prise, couleur_humain, couleur_ia, alpha, beta
     """
         Fonction recursive appelée par Machine
     """
-    if (profondeur==0) or (verifierFinPartie(mode_jeu,jeu,sans_prise)):
+    if (profondeur==0) or (verifierFinPartie(mode_jeu,jeu,sans_prise, couleur_humain)):
         # print("pieces_ia=", pieces_ia) # DEBUG
         return evaluer_jeu(jeu, mode_jeu, sans_prise, couleur_ia, couleur_humain), '-f', '-f'
     """
@@ -1360,7 +1365,7 @@ def phase_de_jeu(jeu, mode_jeu, couleur_ia, couleur_humain):
         else:
             tour='BLANCS'
 
-        estTermine=verifierFinPartie(mode_jeu, jeu, sans_prise)
+        estTermine = verifierFinPartie(mode_jeu, jeu, sans_prise, tour[0])
 
     print("\n\t*********** FIN DE PARTIE ***********\n")
     return jeu
