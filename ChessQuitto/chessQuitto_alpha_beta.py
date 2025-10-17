@@ -362,7 +362,7 @@ def deplacements_possibles(jeu, piece, ligne_piece, colonne_piece):
                     if peutAttaquer(jeu,piece[1:], ligne_piece, colonne_piece, lig_dest, col_dest): # Si la piece peut l'atteindre, alors on l'ajoute
                         positions+=[traduire_indice_en_pos(lig_dest,col_dest)]
                 else : # Sinon => Si c'est un pion et une case de destination vide
-                    if abs(lig_dest-ligne_piece)==1: # Si peut aller vers avant arriere ou cotes, alors on l'ajoute
+                    if abs(lig_dest-ligne_piece)==1 and abs(col_dest-colonne_piece)==0: # Si peut aller vers avant arriere ou cotes, alors on l'ajoute
                         positions+=[traduire_indice_en_pos(lig_dest, col_dest)]
 
     return positions
