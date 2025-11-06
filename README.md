@@ -1,7 +1,7 @@
-# ChessQuitto AI — Python
+# ChessQuito AI — Python
 
 ## Description
-Development of an **Artificial Intelligence (AI)** in **Python** capable of playing **ChessQuitto**, a strategic board game inspired by chess and available in three variants: **Queen–Queen**, **Queen–Pawn**, and **Queen–King**.  
+Development of an **Artificial Intelligence (AI)** in **Python** capable of playing **ChessQuito**, a strategic board game inspired by chess and available in three variants: **Queen–Queen**, **Queen–Pawn**, and **Queen–King**.  
 This project was completed as part of the **Introduction to Artificial Intelligence** module during the **second year of the Computer Science Bachelor’s degree** at the **University of Lorraine**.
 
 The objective was to design an AI able to **analyze the board**, **evaluate positions**, and **make optimal decisions** depending on the selected variant.
