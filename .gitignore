@@ -3,4 +3,4 @@ ChessQuitto/.idea/
 .DS_Store
 ChessQuitto/Tests_IA_vs_IA/*.txt
 ChessQuitto/Tests_IA_vs_IA/__pycache__/
-
+tests/

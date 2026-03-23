@@ -227,11 +227,8 @@ def piece_est_dans_coin(ligne, colonne):
     return False
 
 def piece_est_sur_le_cote(ligne, colonne):
-    if (ligne==0 or ligne==3) and (colonne==1 or colonne==2):
-        return True
-    if (ligne==1 or colonne==2) and (colonne==0 or colonne==3):
-        return True
-    return False
+    return ((ligne in (0,3) and colonne in (1,2)) or
+            (ligne in (1,2) and colonne in (0,3)))
 
 def positions_pieces(jeu, couleur):
     positions = []
@@ -301,21 +298,17 @@ def echec_et_mat(jeu):
 
 
 def est_en_pat(jeu, couleur):
-    if not roi_en_echec(jeu,couleur) and not est_en_mat(jeu,couleur) : # Si on est pas, ni en echec, ni en mat
-        allies=positions_pieces(jeu, couleur)
-        for allie in allies: # Pour chaque piece allie
-            i=allie[0]
-            j=allie[1]
-            piece=jeu[i][j]
-            lesCoups=deplacements_possibles(jeu,piece,i,j)
-            if len(lesCoups)>0: # Si la piece a des coups possibles
-                for coup in lesCoups:  # Pour chaque coup possible du roi
-                    nouveauJeu, _ = jouer_coup(jeu, piece, coup)
-                    if not roi_en_echec(nouveauJeu,couleur) and not est_en_mat(nouveauJeu,couleur):  # Si le coup joué fait en sorte que le roi ne soit pas en echec alors on est pas en pat
-                        return False
-        return True
-    else: # Sinon (si on est en mat), alors on est pas en pat
+    if roi_en_echec(jeu, couleur) or est_en_mat(jeu, couleur):
         return False
+    allies = positions_pieces(jeu, couleur)
+    for i, j in allies:
+        piece = jeu[i][j]
+        lesCoups = deplacements_possibles(jeu, piece, i, j)
+        for coup in lesCoups:
+            nouveauJeu, _ = jouer_coup(jeu, piece, coup)
+            if not roi_en_echec(nouveauJeu, couleur):
+                return False
+    return True
 
 
 def est_pat(jeu):
@@ -711,9 +704,7 @@ def calcul_echec_au_roi(jeu, couleur_adv):
 
 
 def calcul_pat(jeu, couleur_adv):
-    if est_en_mat(jeu,couleur_adv):
-        return 10
-    return 0
+    return 10 if est_en_pat(jeu, couleur_adv) else 0
 
 
 
@@ -1421,5 +1412,5 @@ def jouer():
 
 Colonnes = ['A', 'B', 'C', 'D']
 Lignes = ['1', '2', '3', '4']
-if __name__ == "__main__":
+if __name__=="__main__":
     jouer()
